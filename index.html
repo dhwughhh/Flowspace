@@ -20,21 +20,18 @@
     </div>
     
     <div class="luxury-nav">
-      <button class="menu-trigger" onclick="window.openModal('calendar-modal')">Log</button>
-      <button class="menu-trigger" onclick="window.openModal('analytics-modal')">Insights</button>
+      <button class="menu-trigger" onclick="openModal('calendar-modal')">Log</button>
+      <button class="menu-trigger" onclick="openModal('analytics-modal')">Insights</button>
     </div>
   </div>
 
   <div id="home-screen" class="screen-wrapper active">
     <div class="center-content-box">
       <header class="luxury-header">
-        <p class="subtitle big-quote" id="home-quote">"It’s not what we do once in a while that shapes our lives. It’s what we do consistently."</p>
-        <h1 id="greeting" class="flowstate-title">-FLOWSPACE-</h1>
-        
-        <p class="premium-tag" style="margin-top: -8px; margin-bottom: 15px; font-weight: 500; opacity: 0.7;">Enter Flowstate</p>
-        
+        <p class="subtitle big-quote" id="home-quote">"Quiet the mind. The rest will follow."</p>
+        <h1 id="greeting" class="flowstate-title">FLOWSTATE</h1>
         <div class="premium-badge">
-          <span class="pulse-dot"></span> Today: <strong id="yesterday-hours">0</strong> mins lock in
+          <span class="pulse-dot"></span> Today: <strong id="yesterday-hours">0</strong> mins inside deep focus
         </div>
       </header>
 
@@ -42,17 +39,17 @@
         <div class="luxury-card interactive-hover-card">
           <p class="section-label">Select Focus Track</p>
           <div class="subject-flex">
-            <button class="subject-pill active" onclick="window.selectSubject('Physics')">Physics</button>
-            <button class="subject-pill" onclick="window.selectSubject('Chemistry')">Chemistry</button>
-            <button class="subject-pill" onclick="window.selectSubject('Mathematics')">Mathematics</button>
-            <button class="subject-pill" onclick="window.selectSubject('Skill Building')">Skills</button>
+            <button class="subject-pill active" onclick="selectSubject('Physics')">Physics</button>
+            <button class="subject-pill" onclick="selectSubject('Chemistry')">Chemistry</button>
+            <button class="subject-pill" onclick="selectSubject('Mathematics')">Mathematics</button>
+            <button class="subject-pill" onclick="selectSubject('Skill Building')">Skills</button>
           </div>
 
-          <p class="section-label">Today's goals:-</p>
-          <input type="text" id="session-name" placeholder="Headings to be covered" class="luxury-input">
-          
-          <button class="glass-depth-btn activate-theme" onclick="window.startFocus()">
-            Activate Flowstate
+          <p class="section-label">TODAY'S GOAL:-</p>
+          <input type="text" id="session-name" placeholder="subtopics" class="luxury-input">
+
+          <button class="glass-depth-btn activate-theme" onclick="startFocus()">
+            Activate Flow
           </button>
         </div>
       </main>
@@ -86,8 +83,8 @@
           <div id="time-display">00:00</div>
 
           <div class="luxury-controls-row">
-            <button class="glass-depth-btn pause-theme" onclick="window.toggleTimer()" id="pause-btn">Pause</button>
-            <button class="glass-depth-btn exit-theme" onclick="window.quitSession()">Exit Space</button>
+            <button class="glass-depth-btn pause-theme" onclick="toggleTimer()" id="pause-btn">Pause</button>
+            <button class="glass-depth-btn exit-theme" onclick="quitSession()">Exit Space</button>
           </div>
         </div>
       </main>
@@ -95,14 +92,14 @@
 
     <div class="side-notepad-panel" id="sliding-notepad">
       <div class="luxury-card notepad-card interactive-hover-card">
-        <p class="section-label-notepad">✨ Quick Notes</p>
-        <textarea id="scratchpad" placeholder="• Press Enter to add a fresh bullet..." onkeydown="window.handleBulletPoints(event)"></textarea>
+        <p class="section-label-notepad">✨ Quick Bullet Notes</p>
+        <textarea id="scratchpad" placeholder="• Press Enter to add a fresh bullet..." onkeydown="handleBulletPoints(event)"></textarea>
       </div>
     </div>
 
   </div>
 
-  <div id="calendar-modal" class="modal hidden" onclick="window.closeModal('calendar-modal')">
+  <div id="calendar-modal" class="modal hidden" onclick="closeModal('calendar-modal')">
     <div class="modal-panel luxury-card" onclick="event.stopPropagation()">
       <h3>Flow Calendar & Notes</h3>
       <div class="premium-calendar-grid" id="calendar-days"></div>
@@ -112,11 +109,11 @@
         <p style="font-size:0.85rem; opacity:0.6; font-style:italic;">No session notes recorded today yet.</p>
       </div>
 
-      <button class="glass-depth-btn exit-theme" style="width: 100%; margin-top:15px;" onclick="window.closeModal('calendar-modal')">Return</button>
+      <button class="glass-depth-btn exit-theme" style="width: 100%; margin-top:15px;" onclick="closeModal('calendar-modal')">Return</button>
     </div>
   </div>
 
-  <div id="analytics-modal" class="modal hidden" onclick="window.closeModal('analytics-modal')">
+  <div id="analytics-modal" class="modal hidden" onclick="closeModal('analytics-modal')">
     <div class="modal-panel luxury-card" onclick="event.stopPropagation()">
       <h3>Flow Insights</h3>
       <div class="insights-container">
@@ -130,7 +127,7 @@
         </div>
         <div class="luxury-chart" id="analytics-chart"></div>
       </div>
-      <button class="glass-depth-btn exit-theme" style="width: 100%;" onclick="window.closeModal('analytics-modal')">Return</button>
+      <button class="glass-depth-btn exit-theme" style="width: 100%;" onclick="closeModal('analytics-modal')">Return</button>
     </div>
   </div>
 

@@ -1,8 +1,8 @@
-let studyHistory = JSON.parse(localStorage.getItem('flowSpaceHistory')) || [];
 let selectedSubject = 'Physics';
 let timerInterval = null;
 let secondsElapsed = 0;
 let isTimerRunning = false;
+let studyHistory = []; 
 
 const homeQuotes = [
   "\"Quiet the mind, the rest will follow.\"",
@@ -36,10 +36,6 @@ function playAudioTone(frequency, type, duration) {
   } catch(e) {}
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  recalculateDashboards();
-});
-
 window.selectSubject = function(subject) {
   playAudioTone(600, 'sine', 0.08);
   document.querySelectorAll('.subject-pill').forEach(btn => btn.classList.remove('active'));
@@ -47,7 +43,7 @@ window.selectSubject = function(subject) {
     window.event.currentTarget.classList.add('active');
   }
   selectedSubject = subject;
-};
+}
 
 window.startFocus = function() {
   playAudioTone(440, 'triangle', 0.3);
@@ -74,7 +70,7 @@ window.startFocus = function() {
   
   resetTimerMachine();
   toggleTimer(); 
-};
+}
 
 window.toggleTimer = function() {
   const pauseBtn = document.getElementById('pause-btn');
@@ -93,7 +89,7 @@ window.toggleTimer = function() {
       updateAnalogClockHands();
     }, 1000);
   }
-};
+}
 
 function updateTimerDisplay() {
   const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
@@ -131,21 +127,13 @@ window.quitSession = function() {
   const minutesStudied = Math.round(secondsElapsed / 60) || 1; 
 
   if (secondsElapsed >= 1) {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    const fullDateString = `${year}-${month}-${day}`;
-
     studyHistory.push({
       subject: selectedSubject,
       topic: document.getElementById('current-topic').innerText,
       minutes: minutesStudied,
-      fullDate: fullDateString,
+      date: new Date().getDate(),
       notes: currentNotes !== '•' ? currentNotes : ''
     });
-
-    localStorage.setItem('flowSpaceHistory', JSON.stringify(studyHistory));
   }
 
   document.getElementById('home-quote').innerText = homeQuotes[Math.floor(Math.random() * homeQuotes.length)];
@@ -164,86 +152,23 @@ window.quitSession = function() {
   }
 
   recalculateDashboards();
-  window.openModal('calendar-modal');
-};
-
-function calculateConsecutiveStreak(uniqueDatesSorted) {
-  if (uniqueDatesSorted.length === 0) return 0;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const parsedDates = uniqueDatesSorted.map(dString => {
-    const [y, m, d] = dString.split('-').map(Number);
-    return new Date(y, m - 1, d, 0, 0, 0, 0);
-  });
-
-  const mostRecentStudyDate = parsedDates[parsedDates.length - 1];
-  const timeDiffFromToday = today.getTime() - mostRecentStudyDate.getTime();
-  const daysDiffFromToday = Math.round(timeDiffFromToday / (1000 * 60 * 60 * 24));
-  const missedDaysSinceLastStudy = daysDiffFromToday - 1;
-
-  if (missedDaysSinceLastStudy >= 3) {
-    return 0;
-  }
-
-  let currentStreak = 1;
-
-  for (let i = parsedDates.length - 1; i > 0; i--) {
-    const currentDate = parsedDates[i];
-    const previousDate = parsedDates[i - 1];
-    
-    const diffTime = currentDate.getTime() - previousDate.getTime();
-    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-    const missedDaysBetween = diffDays - 1;
-
-    if (missedDaysBetween === 0) {
-      currentStreak++;
-    } else if (missedDaysBetween < 3) {
-      continue;
-    } else {
-      break;
-    }
-  }
-
-  return currentStreak;
+  openModal('calendar-modal');
 }
 
 function recalculateDashboards() {
   let totalMin = 0;
-  let todayMin = 0;
   let subjectMinutes = { 'Physics': 0, 'Chemistry': 0, 'Mathematics': 0, 'Skill Building': 0 };
-  let studiedDateStrings = [];
+  let studiedDays = [];
   const notesContainer = document.getElementById('historical-notes-display');
   
   if(notesContainer) notesContainer.innerHTML = '';
-
-  const todayObj = new Date();
-  const y = todayObj.getFullYear();
-  const m = String(todayObj.getMonth() + 1).padStart(2, '0');
-  const d = String(todayObj.getDate()).padStart(2, '0');
-  const todayDateString = `${y}-${m}-${d}`;
 
   studyHistory.forEach(item => {
     totalMin += item.minutes;
     if(subjectMinutes[item.subject] !== undefined) {
       subjectMinutes[item.subject] += item.minutes;
     }
-    
-    let dateKey = item.fullDate;
-    if (!dateKey && item.date) {
-      const now = new Date();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      dateKey = `${now.getFullYear()}-${month}-${String(item.date).padStart(2, '0')}`;
-    }
-
-    if (dateKey === todayDateString) {
-      todayMin += item.minutes;
-    }
-
-    if (dateKey && !studiedDateStrings.includes(dateKey)) {
-      studiedDateStrings.push(dateKey);
-    }
+    if(!studiedDays.includes(item.date)) studiedDays.push(item.date);
 
     if (item.notes && notesContainer) {
       const formattedNotes = item.notes.replace(/\n/g, '<br>');
@@ -260,18 +185,15 @@ function recalculateDashboards() {
     notesContainer.innerHTML = `<p style="font-size:0.85rem; opacity:0.6; font-style:italic;">No session notes recorded today yet.</p>`;
   }
 
-  studiedDateStrings.sort();
-  const dynamicStreakCount = calculateConsecutiveStreak(studiedDateStrings);
-
   const yesterdayHours = document.getElementById('yesterday-hours');
   const statSessionsCount = document.getElementById('stat-sessions-count');
   const statTotalMinutes = document.getElementById('stat-total-minutes');
   const streakDays = document.getElementById('streak-days');
 
-  if(yesterdayHours) yesterdayHours.innerText = todayMin;
+  if(yesterdayHours) yesterdayHours.innerText = totalMin;
   if(statSessionsCount) statSessionsCount.innerText = studyHistory.length;
-  if(statTotalMinutes) statTotalMinutes.innerText = `${totalMin} mins`;
-  if(streakDays) streakDays.innerText = dynamicStreakCount;
+  if(statTotalMinutes) statTotalMinutes.innerText = totalMin;
+  if(streakDays) streakDays.innerText = studiedDays.length;
 
   const chartBox = document.getElementById('analytics-chart');
   if(chartBox) {
@@ -285,17 +207,8 @@ function recalculateDashboards() {
   const calendarBox = document.getElementById('calendar-days');
   if(calendarBox) {
     calendarBox.innerHTML = '';
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
-    const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-    for(let i = 1; i <= totalDaysInMonth; i++) {
-      const padDay = String(i).padStart(2, '0');
-      const padMonth = String(currentMonth + 1).padStart(2, '0');
-      const matchString = `${currentYear}-${padMonth}-${padDay}`;
-      
-      const isActive = studiedDateStrings.includes(matchString) ? 'cell-active' : '';
+    for(let i = 1; i <= 14; i++) {
+      const isActive = studiedDays.includes(i) ? 'cell-active' : '';
       calendarBox.innerHTML += `<div class="day ${isActive}">${i}</div>`;
     }
   }
@@ -306,13 +219,13 @@ window.openModal = function(id) {
   recalculateDashboards();
   const targetModal = document.getElementById(id);
   if(targetModal) targetModal.classList.remove('hidden'); 
-};
+}
 
 window.closeModal = function(id) { 
   playAudioTone(400, 'sine', 0.05);
   const targetModal = document.getElementById(id);
   if(targetModal) targetModal.classList.add('hidden'); 
-};
+}
 
 window.handleBulletPoints = function(e) {
   const textarea = e.target;
@@ -327,4 +240,4 @@ window.handleBulletPoints = function(e) {
     textarea.value = text.substring(0, start) + '\n• ' + text.substring(end);
     textarea.selectionStart = textarea.selectionEnd = start + 3;
   }
-};
+}

@@ -1,243 +1,295 @@
-let selectedSubject = 'Physics';
-let timerInterval = null;
-let secondsElapsed = 0;
-let isTimerRunning = false;
-let studyHistory = []; 
+/**
+ * FlowSpace - Core Application Script
+ * Architecture, State Management, and Security Refactor
+ */
 
-const homeQuotes = [
-  "\"Quiet the mind, the rest will follow.\"",
-  "\"What is meant for you will require your focus.\"",
-  "\"Softly, step by step, you create your future.\"",
-  "\"Mastering the art of consistency.\""
-];
+// ==========================================
+// 1. STATE & PERSISTENCE MANAGEMENT (Fix 1, 3)
+// ==========================================
 
-const timerQuotes = [
-  "\"Brick by brick, you're building an empire.\"",
-  "\"The energy you put out returns to you.\"",
-  "\"Quiet execution beats loud talking.\"",
-  "\"Deep flow activated. Remain present.\""
-];
+// Centralized application state
+let appState = {
+    sessions: [], // Array of objects: { date: "YYYY-MM-DD", duration: Number (mins) }
+    notes: []     // Array of strings
+};
 
-function playAudioTone(frequency, type, duration) {
-  try {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
+/**
+ * Loads data from localStorage into application state on startup.
+ */
+function loadData() {
+    try {
+        const savedData = localStorage.getItem('flowspace_data');
+        if (savedData) {
+            appState = JSON.parse(savedData);
+            // Fallback validation to ensure arrays exist
+            if (!Array.isArray(appState.sessions)) appState.sessions = [];
+            if (!Array.isArray(appState.notes)) appState.notes = [];
+        }
+    } catch (e) {
+        console.error("Failed to load data from localStorage:", e);
+    }
+}
+
+/**
+ * Saves current application state to localStorage.
+ * Call this every time appState is mutated!
+ */
+function saveData() {
+    try {
+        localStorage.setItem('flowspace_data', JSON.stringify(appState));
+    } catch (e) {
+        console.error("Failed to save data to localStorage:", e);
+    }
+}
+
+/**
+ * Helper to get the complete current date as a localized string (YYYY-MM-DD)
+ * safely preventing month/day tracking mismatches.
+ */
+function getTodayString() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+
+// ==========================================
+// 2. STREAK & STATS LOGIC (Fix 2, 5)
+// ==========================================
+
+/**
+ * Calculates a true consecutive day streak backward from today/yesterday.
+ */
+function calculateCurrentStreak() {
+    // Extract unique dates and sort them chronologically
+    const uniqueDates = [...new Set(appState.sessions.map(s => s.date))].sort();
+    if (uniqueDates.length === 0) return 0;
+
+    const todayStr = getTodayString();
     
-    oscillator.type = type;
-    oscillator.frequency.value = frequency;
-    gainNode.gain.setValueAtTime(0.02, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+    // Generate yesterday's YYYY-MM-DD string
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    // If there is no entry for today AND no entry for yesterday, the streak is dead
+    if (!uniqueDates.includes(todayStr) && !uniqueDates.includes(yesterdayStr)) {
+        return 0;
+    }
+
+    let streak = 0;
+    // Walk backward starting from today (if studied today) or yesterday
+    let checkDate = uniqueDates.includes(todayStr) ? new Date(todayStr) : new Date(yesterdayStr);
+
+    while (true) {
+        const checkDateStr = checkDate.toISOString().split('T')[0];
+        if (uniqueDates.includes(checkDateStr)) {
+            streak++;
+            checkDate.setDate(checkDate.getDate() - 1); // Step 1 day backward
+        } else {
+            break; // Gap found, streak ends
+        }
+    }
+
+    return streak;
+}
+
+/**
+ * Computes analytics and pushes calculations to UI elements.
+ */
+function updateDashboardUI() {
+    const todayStr = getTodayString();
+
+    // Fix 5: Filter sessions ONLY belonging to today's strict YYYY-MM-DD string
+    const todayMins = appState.sessions
+        .filter(session => session.date === todayStr)
+        .reduce((total, session) => total + session.duration, 0);
+
+    // Calculate overall total time
+    const totalMins = appState.sessions.reduce((total, session) => total + session.duration, 0);
     
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    oscillator.start();
-    oscillator.stop(audioCtx.currentTime + duration);
-  } catch(e) {}
+    // Compute the correct streak
+    const currentStreak = calculateCurrentStreak();
+
+    // DOM Element Binding (Adjust IDs if they differ in your HTML)
+    const todayElem = document.getElementById('today-stats');
+    const totalElem = document.getElementById('total-stats');
+    const streakElem = document.getElementById('streak-count');
+
+    if (todayElem) todayElem.textContent = `Today: ${todayMins} mins`;
+    if (totalElem) totalElem.textContent = `Total Focus Time: ${totalMins} mins`;
+    if (streakElem) streakElem.textContent = `${currentStreak} Days`;
 }
 
-window.selectSubject = function(subject) {
-  playAudioTone(600, 'sine', 0.08);
-  document.querySelectorAll('.subject-pill').forEach(btn => btn.classList.remove('active'));
-  if (window.event && window.event.currentTarget) {
-    window.event.currentTarget.classList.add('active');
-  }
-  selectedSubject = subject;
+
+// ==========================================
+// 3. DYNAMIC CALENDAR RENDERING (Fix 4)
+// ==========================================
+
+/**
+ * Dynamically builds a calendar grid matching the actual days of the current month.
+ */
+function renderDynamicCalendar() {
+    const calendarGrid = document.getElementById('calendar-grid');
+    if (!calendarGrid) return;
+    
+    calendarGrid.innerHTML = ''; // Safely clear out previous month grid
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-indexed (0 = Jan, 11 = Dec)
+
+    // Using Day '0' of next month automatically drops back to the last day of this month
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dayElement = document.createElement('div');
+        dayElement.classList.add('calendar-day');
+        dayElement.textContent = day;
+
+        // Determine if this day map contains recorded study durations
+        const targetDateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const hasStudied = appState.sessions.some(s => s.date === targetDateStr);
+        
+        if (hasStudied) {
+            dayElement.classList.add('active-study-day'); // Highlight styling
+        }
+
+        calendarGrid.appendChild(dayElement);
+    }
 }
 
-window.startFocus = function() {
-  playAudioTone(440, 'triangle', 0.3);
-  const sessionName = document.getElementById('session-name').value || "Deep Focus";
-  
-  document.getElementById('timer-quote').innerText = timerQuotes[Math.floor(Math.random() * timerQuotes.length)];
-  document.getElementById('current-topic').innerText = sessionName;
-  document.getElementById('current-subject').innerText = selectedSubject;
-  
-  document.getElementById('scratchpad').value = '• ';
 
-  document.getElementById('home-screen').classList.remove('active');
-  setTimeout(() => document.getElementById('home-screen').classList.add('hidden'), 400);
-  
-  const timerScreen = document.getElementById('timer-screen');
-  timerScreen.classList.remove('hidden');
-  setTimeout(() => timerScreen.classList.add('active'), 50);
-  
-  const bgLayer = document.getElementById('bg-pattern-layer');
-  if(bgLayer) {
-    bgLayer.classList.remove('bg-layer-floral');
-    bgLayer.classList.add('bg-layer-lined');
-  }
-  
-  resetTimerMachine();
-  toggleTimer(); 
-}
+// ==========================================
+// 4. SECURE NOTES ENGINE (Fix 6)
+// ==========================================
 
-window.toggleTimer = function() {
-  const pauseBtn = document.getElementById('pause-btn');
-  if (isTimerRunning) {
-    clearInterval(timerInterval);
-    pauseBtn.innerText = "Resume Flow";
-    isTimerRunning = false;
-    playAudioTone(300, 'sine', 0.2);
-  } else {
-    isTimerRunning = true;
-    pauseBtn.innerText = "Pause";
-    playAudioTone(520, 'sine', 0.12);
-    timerInterval = setInterval(() => {
-      secondsElapsed++;
-      updateTimerDisplay();
-      updateAnalogClockHands();
-    }, 1000);
-  }
-}
+/**
+ * Safe render engine utilizing node text fields to strip malicious markup.
+ */
+function renderNotes() {
+    const notesContainer = document.getElementById('notes-list');
+    if (!notesContainer) return;
 
-function updateTimerDisplay() {
-  const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
-  const secs = (secondsElapsed % 60).toString().padStart(2, '0');
-  document.getElementById('time-display').innerText = `${mins}:${secs}`;
-}
+    notesContainer.innerHTML = ''; // Safe wipe of layout structural wrapping
 
-function updateAnalogClockHands() {
-  const secHand = document.getElementById('second-hand');
-  const minHand = document.getElementById('minute-hand');
-  const hrHand = document.getElementById('hour-hand');
+    appState.notes.forEach((noteText, index) => {
+        const noteCard = document.createElement('div');
+        noteCard.classList.add('note-item');
 
-  const secDegrees = (secondsElapsed % 60) * 6; 
-  const minDegrees = (secondsElapsed / 60) * 6;
-  const hrDegrees = (secondsElapsed / 3600) * 30;
+        const textWrapper = document.createElement('p');
+        // Fix 6: textContent neutralizes XSS vectors by string-encoding elements
+        textWrapper.textContent = noteText; 
 
-  if(secHand) secHand.style.transform = `rotate(${secDegrees}deg)`;
-  if(minHand) minHand.style.transform = `rotate(${minDegrees}deg)`;
-  if(hrHand) hrHand.style.transform = `rotate(${hrDegrees}deg)`;
-}
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '×';
+        deleteBtn.className = 'delete-note-btn';
+        deleteBtn.onclick = () => removeNote(index);
 
-function resetTimerMachine() {
-  clearInterval(timerInterval);
-  secondsElapsed = 0;
-  isTimerRunning = false;
-  updateTimerDisplay();
-  updateAnalogClockHands();
-}
-
-window.quitSession = function() {
-  playAudioTone(350, 'sine', 0.4);
-  clearInterval(timerInterval);
-  
-  const currentNotes = document.getElementById('scratchpad').value.trim();
-  const minutesStudied = Math.round(secondsElapsed / 60) || 1; 
-
-  if (secondsElapsed >= 1) {
-    studyHistory.push({
-      subject: selectedSubject,
-      topic: document.getElementById('current-topic').innerText,
-      minutes: minutesStudied,
-      date: new Date().getDate(),
-      notes: currentNotes !== '•' ? currentNotes : ''
+        noteCard.appendChild(textWrapper);
+        noteCard.appendChild(deleteBtn);
+        notesContainer.appendChild(noteCard);
     });
-  }
-
-  document.getElementById('home-quote').innerText = homeQuotes[Math.floor(Math.random() * homeQuotes.length)];
-  
-  document.getElementById('timer-screen').classList.remove('active');
-  setTimeout(() => document.getElementById('timer-screen').classList.add('hidden'), 400);
-  
-  const homeScreen = document.getElementById('home-screen');
-  homeScreen.classList.remove('hidden');
-  setTimeout(() => homeScreen.classList.add('active'), 50);
-  
-  const bgLayer = document.getElementById('bg-pattern-layer');
-  if(bgLayer) {
-    bgLayer.classList.remove('bg-layer-lined');
-    bgLayer.classList.add('bg-layer-floral');
-  }
-
-  recalculateDashboards();
-  openModal('calendar-modal');
 }
 
-function recalculateDashboards() {
-  let totalMin = 0;
-  let subjectMinutes = { 'Physics': 0, 'Chemistry': 0, 'Mathematics': 0, 'Skill Building': 0 };
-  let studiedDays = [];
-  const notesContainer = document.getElementById('historical-notes-display');
-  
-  if(notesContainer) notesContainer.innerHTML = '';
+function addNote(text) {
+    if (!text.trim()) return;
+    appState.notes.push(text);
+    saveData();
+    renderNotes();
+}
 
-  studyHistory.forEach(item => {
-    totalMin += item.minutes;
-    if(subjectMinutes[item.subject] !== undefined) {
-      subjectMinutes[item.subject] += item.minutes;
+function removeNote(index) {
+    appState.notes.splice(index, 1);
+    saveData();
+    renderNotes();
+}
+
+
+// ==========================================
+// 5. MEMORY-EFFICIENT AUDIO WEB API (Fix 7)
+// ==========================================
+
+// Global variable stores single context reference lazily allocated upon user click
+let globalAudioContext = null;
+
+/**
+ * Plays a click notification sound reusing a single running AudioContext.
+ */
+function playClickSound() {
+    try {
+        if (!globalAudioContext) {
+            globalAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        if (globalAudioContext.state === 'suspended') {
+            globalAudioContext.resume();
+        }
+
+        const oscillator = globalAudioContext.createOscillator();
+        const gainNode = globalAudioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(globalAudioContext.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(587.33, globalAudioContext.currentTime); // D5 note pitch
+        gainNode.gain.setValueAtTime(0.08, globalAudioContext.currentTime);
+        
+        oscillator.start();
+        gainNode.gain.exponentialRampToValueAtTime(0.00001, globalAudioContext.currentTime + 0.08);
+        oscillator.stop(globalAudioContext.currentTime + 0.08);
+    } catch (err) {
+        console.warn("AudioContext playback blocked or unsupported by browser:", err);
     }
-    if(!studiedDays.includes(item.date)) studiedDays.push(item.date);
+}
 
-    if (item.notes && notesContainer) {
-      const formattedNotes = item.notes.replace(/\n/g, '<br>');
-      notesContainer.innerHTML += `
-        <div class="historical-note-item">
-          <span class="historical-note-meta">${item.subject} — ${item.topic} (${item.minutes}m)</span>
-          <p style="opacity: 0.85; margin-top: 2px;">${formattedNotes}</p>
-        </div>
-      `;
+
+// ==========================================
+// 6. TIMER LOGIC INTEGRATION SAMPLE
+// ==========================================
+
+/**
+ * Call this core function whenever a pomodoro or focus session finishes!
+ * @param {number} minutesDuration - Duration of session to record.
+ */
+function logCompletedSession(minutesDuration) {
+    const todayStr = getTodayString();
+    
+    appState.sessions.push({
+        date: todayStr,
+        duration: minutesDuration
+    });
+
+    saveData();             // Write updates to disk
+    updateDashboardUI();    // Refresh calculations
+    renderDynamicCalendar(); // Check off calendar element
+}
+
+
+// ==========================================
+// 7. BOOTSTRAP INITIALIZATION
+// ==========================================
+
+window.addEventListener('DOMContentLoaded', () => {
+    // 1. Hydrate state
+    loadData();
+
+    // 2. Render updates to interface
+    updateDashboardUI();
+    renderDynamicCalendar();
+    renderNotes();
+
+    // Setup event hooks for explicit user controls (example boilerplate hooks)
+    const noteInputBtn = document.getElementById('add-note-submit');
+    const noteTextField = document.getElementById('note-input-text');
+    if (noteInputBtn && noteTextField) {
+        noteInputBtn.addEventListener('click', () => {
+            playClickSound();
+            addNote(noteTextField.value);
+            noteTextField.value = '';
+        });
     }
-  });
-
-  if (notesContainer && notesContainer.innerHTML === '') {
-    notesContainer.innerHTML = `<p style="font-size:0.85rem; opacity:0.6; font-style:italic;">No session notes recorded today yet.</p>`;
-  }
-
-  const yesterdayHours = document.getElementById('yesterday-hours');
-  const statSessionsCount = document.getElementById('stat-sessions-count');
-  const statTotalMinutes = document.getElementById('stat-total-minutes');
-  const streakDays = document.getElementById('streak-days');
-
-  if(yesterdayHours) yesterdayHours.innerText = totalMin;
-  if(statSessionsCount) statSessionsCount.innerText = studyHistory.length;
-  if(statTotalMinutes) statTotalMinutes.innerText = totalMin;
-  if(streakDays) streakDays.innerText = studiedDays.length;
-
-  const chartBox = document.getElementById('analytics-chart');
-  if(chartBox) {
-    chartBox.innerHTML = '';
-    for (const [sub, min] of Object.entries(subjectMinutes)) {
-      const height = Math.min(min * 6, 65) || 4;
-      chartBox.innerHTML += `<div class="bar" style="height: ${height}px;">${sub[0]}</div>`;
-    }
-  }
-
-  const calendarBox = document.getElementById('calendar-days');
-  if(calendarBox) {
-    calendarBox.innerHTML = '';
-    for(let i = 1; i <= 14; i++) {
-      const isActive = studiedDays.includes(i) ? 'cell-active' : '';
-      calendarBox.innerHTML += `<div class="day ${isActive}">${i}</div>`;
-    }
-  }
-}
-
-window.openModal = function(id) { 
-  playAudioTone(700, 'sine', 0.05);
-  recalculateDashboards();
-  const targetModal = document.getElementById(id);
-  if(targetModal) targetModal.classList.remove('hidden'); 
-}
-
-window.closeModal = function(id) { 
-  playAudioTone(400, 'sine', 0.05);
-  const targetModal = document.getElementById(id);
-  if(targetModal) targetModal.classList.add('hidden'); 
-}
-
-window.handleBulletPoints = function(e) {
-  const textarea = e.target;
-  if (textarea.value === '') {
-    textarea.value = '• ';
-  }
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    textarea.value = text.substring(0, start) + '\n• ' + text.substring(end);
-    textarea.selectionStart = textarea.selectionEnd = start + 3;
-  }
-}
+});

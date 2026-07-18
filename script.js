@@ -24,16 +24,21 @@ function getTodayString() {
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 }
 
+// Appropriate study streak logic: Counts consecutive days up to today
 function calculateCurrentStreak() {
     const uniqueDates = [...new Set(appState.sessions.map(s => s.date))].sort();
     if (uniqueDates.length === 0) return 0;
+    
     const todayStr = getTodayString();
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split('T')[0];
+    
     if (!uniqueDates.includes(todayStr) && !uniqueDates.includes(yesterdayStr)) return 0;
+    
     let streak = 0;
     let checkDate = uniqueDates.includes(todayStr) ? new Date(todayStr) : new Date(yesterdayStr);
+    
     while (true) {
         const checkDateStr = checkDate.toISOString().split('T')[0];
         if (uniqueDates.includes(checkDateStr)) {
@@ -48,68 +53,91 @@ function updateDashboardUI() {
     const todayStr = getTodayString();
     const todayMins = appState.sessions.filter(s => s.date === todayStr).reduce((t, s) => t + s.duration, 0);
     const totalMins = appState.sessions.reduce((t, s) => t + s.duration, 0);
+    
     const streakDaysElem = document.getElementById('streak-days');
     const yesterdayHoursElem = document.getElementById('yesterday-hours'); 
     const statSessionsElem = document.getElementById('stat-sessions-count');
     const statTotalMinsElem = document.getElementById('stat-total-minutes');
+    
     if (streakDaysElem) streakDaysElem.textContent = calculateCurrentStreak();
     if (yesterdayHoursElem) yesterdayHoursElem.textContent = todayMins;
     if (statSessionsElem) statSessionsElem.textContent = appState.sessions.length;
     if (statTotalMinsElem) statTotalMinsElem.textContent = `${totalMins} mins`;
 }
 
+// Renders structural grid items matching your CSS rules exactly
 function renderDynamicCalendar() {
     const calendarGrid = document.getElementById('calendar-days'); 
     if (!calendarGrid) return;
     calendarGrid.innerHTML = ''; 
+    
     const now = new Date();
     const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    
     for (let day = 1; day <= daysInMonth; day++) {
         const dayElement = document.createElement('div');
-        dayElement.classList.add('calendar-day');
+        dayElement.classList.add('day'); // Matches CSS structure perfectly now
         dayElement.textContent = day;
+        
         const targetDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        if (appState.sessions.some(s => s.date === targetDateStr)) dayElement.classList.add('active'); 
+        
+        // Highlight active calendar blocks
+        if (appState.sessions.some(s => s.date === targetDateStr)) {
+            dayElement.classList.add('cell-active');
+        }
         calendarGrid.appendChild(dayElement);
     }
 }
 
+// Renders detailed permanent session logs inside the calendar view
 function renderNotes() {
     const notesContainer = document.getElementById('historical-notes-display'); 
     if (!notesContainer) return;
-    if (appState.notes.length === 0) {
-        notesContainer.innerHTML = `<p style="font-size:0.85rem; opacity:0.6; font-style:italic;">No session notes recorded today yet.</p>`;
+    
+    if (appState.sessions.length === 0) {
+        notesContainer.innerHTML = `<p style="font-size:0.85rem; opacity:0.6; font-style:italic;">No logged history yet.</p>`;
         return;
     }
+    
     notesContainer.innerHTML = ''; 
-    appState.notes.forEach((noteText, index) => {
-        const noteCard = document.createElement('div');
-        noteCard.style = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:rgba(255,255,255,0.05); padding:6px 10px; border-radius:8px;';
-        const textWrapper = document.createElement('span');
-        textWrapper.style.fontSize = '0.9rem';
-        textWrapper.textContent = noteText; 
+    // Show details of every single completed focus slot chronologically
+    appState.sessions.slice().reverse().forEach((session, index) => {
+        const actualIndex = appState.sessions.length - 1 - index;
+        const logCard = document.createElement('div');
+        logCard.className = 'historical-note-item';
+        logCard.style.position = 'relative';
+        
+        const metaSpan = document.createElement('span');
+        metaSpan.className = 'historical-note-meta';
+        metaSpan.textContent = `${session.date} • ${session.subject} (${session.duration} mins)`;
+        
+        const detailsSpan = document.createElement('span');
+        detailsSpan.style.fontSize = '0.85rem';
+        detailsSpan.textContent = session.topic ? `Goal: ${session.topic}` : "General Study Focus";
+        
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = '×';
-        deleteBtn.style = 'background:none; border:none; color:#ff8fa3; cursor:pointer; font-size:1.2rem;';
-        deleteBtn.onclick = () => { appState.notes.splice(index, 1); saveData(); renderNotes(); };
-        noteCard.appendChild(textWrapper);
-        noteCard.appendChild(deleteBtn);
-        notesContainer.appendChild(noteCard);
+        deleteBtn.style = 'position:absolute; right:5px; top:5px; background:none; border:none; color:#ff8fa3; cursor:pointer; font-size:1.1rem;';
+        deleteBtn.onclick = () => { 
+            appState.sessions.splice(actualIndex, 1); 
+            saveData(); 
+            updateDashboardUI();
+            renderDynamicCalendar();
+            renderNotes(); 
+        };
+        
+        logCard.appendChild(metaSpan);
+        logCard.appendChild(detailsSpan);
+        logCard.appendChild(deleteBtn);
+        notesContainer.appendChild(logCard);
     });
 }
 
 function handleBulletPoints(event) {
     if (event.key === 'Enter') {
-        event.preventDefault();
         const scratchpad = document.getElementById('scratchpad');
         if (!scratchpad) return;
-        let cleanText = scratchpad.value.replace(/^[•\s\-\*]+/g, '').trim();
-        if (cleanText) {
-            appState.notes.push(cleanText);
-            saveData();
-            renderNotes();
-        }
-        scratchpad.value = '';
+        // Keep scratchpad operational inside session panel
     }
 }
 
@@ -117,9 +145,13 @@ function selectSubject(subjectName) {
     currentSubject = subjectName;
     const buttons = document.querySelectorAll('.subject-pill');
     buttons.forEach(btn => {
-        if (btn.textContent.trim().toLowerCase() === subjectName.toLowerCase() || (btn.textContent.trim() === 'Skills' && subjectName === 'Skill Building')) {
+        let text = btn.textContent.trim();
+        if (text === 'Skills') text = 'Skill Building';
+        if (text.toLowerCase() === subjectName.toLowerCase()) {
             btn.classList.add('active');
-        } else { btn.classList.remove('active'); }
+        } else { 
+            btn.classList.remove('active'); 
+        }
     });
 }
 
@@ -127,13 +159,17 @@ function startFocus() {
     const sessionInput = document.getElementById('session-name');
     const topicTitle = document.getElementById('current-topic');
     const subjectTag = document.getElementById('current-subject');
+    
     if (topicTitle) topicTitle.textContent = sessionInput.value.trim() || "Deep Revision";
     if (subjectTag) subjectTag.textContent = currentSubject;
+    
     document.getElementById('home-screen').classList.replace('active', 'hidden');
     document.getElementById('timer-screen').classList.replace('hidden', 'active');
+    
     totalSecondsElapsed = 0;
     isTimerPaused = false;
     updateTimerDisplay();
+    
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
         if (!isTimerPaused) {
@@ -164,14 +200,21 @@ function toggleTimer() {
 function quitSession() {
     if (timerInterval) clearInterval(timerInterval);
     const finalMinutes = Math.floor(totalSecondsElapsed / 60);
-    if (finalMinutes > 0) {
-        appState.sessions.push({ date: getTodayString(), duration: finalMinutes });
-        saveData();
-    }
+    const sessionInput = document.getElementById('session-name');
+    
+    // Log explicit session tracking details straight to structural storage
+    appState.sessions.push({ 
+        date: getTodayString(), 
+        duration: finalMinutes || 1, // Logs minimum 1 minute for quick tests
+        subject: currentSubject,
+        topic: sessionInput ? sessionInput.value.trim() : ""
+    });
+    saveData();
+    
     document.getElementById('timer-screen').classList.replace('active', 'hidden');
     document.getElementById('home-screen').classList.replace('hidden', 'active');
-    const sessionInput = document.getElementById('session-name');
     if (sessionInput) sessionInput.value = '';
+    
     updateDashboardUI();
     renderDynamicCalendar();
     renderNotes();

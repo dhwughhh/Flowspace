@@ -97,7 +97,8 @@
     <div class="side-notepad-panel" id="sliding-notepad">
       <div class="luxury-card notepad-card interactive-hover-card">
         <p class="section-label-notepad">✨ Quick Bullet Notes</p>
-        <textarea id="scratchpad" placeholder="• Press Enter to add a fresh bullet..." onkeydown="handleBulletPoints(event)"></textarea>
+        <textarea id="scratchpad" placeholder="Type a note and press Enter..." onkeydown="handleBulletPoints(event)"></textarea>
+        <div id="active-bullet-list" style="margin-top: 15px; max-height: 120px; overflow-y: auto; text-align: left; font-size: 0.85rem; line-height: 1.5; opacity: 0.9;"></div>
       </div>
     </div>
   </div>
@@ -109,7 +110,7 @@
       
       <p class="section-label-notepad" style="margin-top:15px;">📜 Logged Session Notes</p>
       <div id="historical-notes-display" class="notes-summary-box">
-        <p style="font-size:0.85rem; opacity:0.6; font-style:italic;">No session notes recorded today yet.</p>
+        <p style="font-size:0.85rem; opacity:0.6; font-style:italic;">No logged history yet.</p>
       </div>
 
       <button class="glass-depth-btn exit-theme" style="width: 100%; margin-top:15px;" onclick="closeModal('calendar-modal')">Return</button>

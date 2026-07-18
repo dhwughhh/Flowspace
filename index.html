@@ -14,7 +14,7 @@
   <div id="bg-pattern-layer" class="bg-layer-floral"></div>
 
   <div class="top-bar-container">
-    <div class="streak-tracker">
+    <div class="streak-tracker" onclick="openModal('analytics-modal')">
       <span class="streak-bow">🎀</span>
       <span class="streak-count" id="streak-days">0</span> day streak
     </div>
@@ -36,7 +36,7 @@
         </div>
       </header>
 
-      <main class="setup-area">
+      <main class="setup-area" style="width: 100%;">
         <div class="luxury-card interactive-hover-card">
           <p class="section-label">Select Focus Track</p>
           <div class="subject-flex">
@@ -54,6 +54,10 @@
           </button>
         </div>
       </main>
+      
+      <footer class="author-credits" style="position: relative; margin-top: 30px; bottom: 0; pointer-events: auto; opacity: 0.7;">
+        -dhwani <span class="heart-icon">♡</span>
+      </footer>
     </div>
   </div>
 
@@ -65,7 +69,7 @@
         <p id="current-subject" class="premium-tag">Physics</p>
       </header>
 
-      <main class="timer-area">
+      <main class="timer-area" style="width: 100%; display: flex; justify-content: center;">
         <div class="luxury-card text-center spec-timer-card interactive-hover-card">
           <div class="luxury-watch">
             <div class="watch-face">
@@ -80,7 +84,7 @@
             <div class="luxury-pin"></div>
           </div>
 
-          <div id="time-display">00:00</div>
+          <div id="time-display" style="text-align: center;">00:00</div>
 
           <div class="luxury-controls-row">
             <button class="glass-depth-btn pause-theme" onclick="toggleTimer()" id="pause-btn">Pause</button>
@@ -129,10 +133,6 @@
       <button class="glass-depth-btn exit-theme" style="width: 100%;" onclick="closeModal('analytics-modal')">Return</button>
     </div>
   </div>
-
-  <footer class="author-credits">
-    -dhwani <span class="heart-icon">♡</span>
-  </footer>
 
   <script src="script.js"></script>
 </body>

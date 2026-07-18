@@ -3,6 +3,7 @@ let currentSubject = "Physics";
 let timerInterval = null;
 let totalSecondsElapsed = 0;
 let isTimerPaused = false;
+let selectedDateStr = ""; // Tracks which calendar date is clicked
 
 function loadData() {
     try {
@@ -24,7 +25,6 @@ function getTodayString() {
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 }
 
-// Appropriate study streak logic: Counts consecutive days up to today
 function calculateCurrentStreak() {
     const uniqueDates = [...new Set(appState.sessions.map(s => s.date))].sort();
     if (uniqueDates.length === 0) return 0;
@@ -65,7 +65,6 @@ function updateDashboardUI() {
     if (statTotalMinsElem) statTotalMinsElem.textContent = `${totalMins} mins`;
 }
 
-// Renders structural grid items matching your CSS rules exactly
 function renderDynamicCalendar() {
     const calendarGrid = document.getElementById('calendar-days'); 
     if (!calendarGrid) return;
@@ -76,36 +75,60 @@ function renderDynamicCalendar() {
     
     for (let day = 1; day <= daysInMonth; day++) {
         const dayElement = document.createElement('div');
-        dayElement.classList.add('day'); // Matches CSS structure perfectly now
+        dayElement.classList.add('day'); 
         dayElement.textContent = day;
+        dayElement.style.cursor = "pointer";
         
         const targetDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         
-        // Highlight active calendar blocks
+        // Highlight days that have recorded data
         if (appState.sessions.some(s => s.date === targetDateStr)) {
             dayElement.classList.add('cell-active');
         }
+        
+        // Highlight if this specific day is selected by the user
+        if (selectedDateStr === targetDateStr) {
+            dayElement.style.outline = "2px solid #4c0519";
+        }
+        
+        // Make dates clickable
+        dayElement.onclick = () => {
+            if (selectedDateStr === targetDateStr) {
+                selectedDateStr = ""; // Deselect to show all records if clicked again
+            } else {
+                selectedDateStr = targetDateStr;
+            }
+            renderDynamicCalendar();
+            renderNotes();
+        };
+        
         calendarGrid.appendChild(dayElement);
     }
 }
 
-// Renders detailed permanent session logs inside the calendar view
 function renderNotes() {
     const notesContainer = document.getElementById('historical-notes-display'); 
     if (!notesContainer) return;
     
-    if (appState.sessions.length === 0) {
-        notesContainer.innerHTML = `<p style="font-size:0.85rem; opacity:0.6; font-style:italic;">No logged history yet.</p>`;
+    // Filter sessions based on selection
+    let filteredSessions = appState.sessions;
+    if (selectedDateStr) {
+        filteredSessions = appState.sessions.filter(s => s.date === selectedDateStr);
+    }
+    
+    if (filteredSessions.length === 0) {
+        notesContainer.innerHTML = `<p style="font-size:0.85rem; opacity:0.6; font-style:italic;">${selectedDateStr ? "No sessions logged on this date." : "No logged history yet."}</p>`;
         return;
     }
     
     notesContainer.innerHTML = ''; 
-    // Show details of every single completed focus slot chronologically
-    appState.sessions.slice().reverse().forEach((session, index) => {
-        const actualIndex = appState.sessions.length - 1 - index;
+    
+    filteredSessions.slice().reverse().forEach((session) => {
+        const actualIndex = appState.sessions.findIndex(s => s === session);
         const logCard = document.createElement('div');
         logCard.className = 'historical-note-item';
         logCard.style.position = 'relative';
+        logCard.style.marginBottom = '12px';
         
         const metaSpan = document.createElement('span');
         metaSpan.className = 'historical-note-meta';
@@ -113,13 +136,32 @@ function renderNotes() {
         
         const detailsSpan = document.createElement('span');
         detailsSpan.style.fontSize = '0.85rem';
+        detailsSpan.style.display = 'block';
         detailsSpan.textContent = session.topic ? `Goal: ${session.topic}` : "General Study Focus";
+        
+        // Display scratchpad bullet notes live inside the log if they exist
+        if (session.bullets && session.bullets.length > 0) {
+            const bulletContainer = document.createElement('div');
+            bulletContainer.style.marginTop = '6px';
+            bulletContainer.style.paddingLeft = '10px';
+            bulletContainer.style.borderLeft = '1px solid rgba(76, 5, 25, 0.15)';
+            
+            session.bullets.forEach(b => {
+                const bText = document.createElement('p');
+                bText.style.fontSize = '0.8rem';
+                bText.style.opacity = '0.8';
+                bText.textContent = `• ${b}`;
+                bulletContainer.appendChild(bText);
+            });
+            detailsSpan.appendChild(bulletContainer);
+        }
         
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = '×';
         deleteBtn.style = 'position:absolute; right:5px; top:5px; background:none; border:none; color:#ff8fa3; cursor:pointer; font-size:1.1rem;';
-        deleteBtn.onclick = () => { 
-            appState.sessions.splice(actualIndex, 1); 
+        deleteBtn.onclick = (e) => { 
+            e.stopPropagation();
+            if(actualIndex !== -1) appState.sessions.splice(actualIndex, 1); 
             saveData(); 
             updateDashboardUI();
             renderDynamicCalendar();
@@ -133,11 +175,17 @@ function renderNotes() {
     });
 }
 
+// Stores live typed scratchpad points during active countdown block
 function handleBulletPoints(event) {
     if (event.key === 'Enter') {
+        event.preventDefault();
         const scratchpad = document.getElementById('scratchpad');
         if (!scratchpad) return;
-        // Keep scratchpad operational inside session panel
+        let cleanText = scratchpad.value.replace(/^[•\s\-\*]+/g, '').trim();
+        if (cleanText) {
+            appState.notes.push(cleanText); // Temporarily gather notes during running slot
+            scratchpad.value = '• ';
+        }
     }
 }
 
@@ -159,9 +207,13 @@ function startFocus() {
     const sessionInput = document.getElementById('session-name');
     const topicTitle = document.getElementById('current-topic');
     const subjectTag = document.getElementById('current-subject');
+    const scratchpad = document.getElementById('scratchpad');
     
     if (topicTitle) topicTitle.textContent = sessionInput.value.trim() || "Deep Revision";
     if (subjectTag) subjectTag.textContent = currentSubject;
+    if (scratchpad) scratchpad.value = '• ';
+    
+    appState.notes = []; // Clear array for new active notes context
     
     document.getElementById('home-screen').classList.replace('active', 'hidden');
     document.getElementById('timer-screen').classList.replace('hidden', 'active');
@@ -201,19 +253,28 @@ function quitSession() {
     if (timerInterval) clearInterval(timerInterval);
     const finalMinutes = Math.floor(totalSecondsElapsed / 60);
     const sessionInput = document.getElementById('session-name');
+    const scratchpad = document.getElementById('scratchpad');
     
-    // Log explicit session tracking details straight to structural storage
+    // Grab last unfinished bullet note from panel if user forgot to hit Enter
+    if (scratchpad) {
+        let finalNoteText = scratchpad.value.replace(/^[•\s\-\*]+/g, '').trim();
+        if (finalNoteText) appState.notes.push(finalNoteText);
+    }
+    
+    // Tie everything (session data + custom live notes) into structural log array
     appState.sessions.push({ 
         date: getTodayString(), 
-        duration: finalMinutes || 1, // Logs minimum 1 minute for quick tests
+        duration: finalMinutes || 1, 
         subject: currentSubject,
-        topic: sessionInput ? sessionInput.value.trim() : ""
+        topic: sessionInput ? sessionInput.value.trim() : "",
+        bullets: [...appState.notes] 
     });
+    
+    appState.notes = []; 
     saveData();
     
     document.getElementById('timer-screen').classList.replace('active', 'hidden');
     document.getElementById('home-screen').classList.replace('hidden', 'active');
-    if (sessionInput) sessionInput.value = '';
     
     updateDashboardUI();
     renderDynamicCalendar();
@@ -223,6 +284,9 @@ function quitSession() {
 function openModal(modalId) {
     const targetModal = document.getElementById(modalId);
     if (targetModal) targetModal.classList.remove('hidden');
+    selectedDateStr = ""; // Reset filtering when reopening log
+    renderDynamicCalendar();
+    renderNotes();
 }
 
 function closeModal(modalId) {

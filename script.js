@@ -3,7 +3,7 @@ let currentSubject = "Physics";
 let timerInterval = null;
 let totalSecondsElapsed = 0;
 let isTimerPaused = false;
-let selectedDateStr = ""; // Tracks which calendar date is clicked
+let selectedDateStr = "";
 
 function loadData() {
     try {
@@ -81,20 +81,17 @@ function renderDynamicCalendar() {
         
         const targetDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         
-        // Highlight days that have recorded data
         if (appState.sessions.some(s => s.date === targetDateStr)) {
             dayElement.classList.add('cell-active');
         }
         
-        // Highlight if this specific day is selected by the user
         if (selectedDateStr === targetDateStr) {
             dayElement.style.outline = "2px solid #4c0519";
         }
         
-        // Make dates clickable
         dayElement.onclick = () => {
             if (selectedDateStr === targetDateStr) {
-                selectedDateStr = ""; // Deselect to show all records if clicked again
+                selectedDateStr = ""; 
             } else {
                 selectedDateStr = targetDateStr;
             }
@@ -110,7 +107,6 @@ function renderNotes() {
     const notesContainer = document.getElementById('historical-notes-display'); 
     if (!notesContainer) return;
     
-    // Filter sessions based on selection
     let filteredSessions = appState.sessions;
     if (selectedDateStr) {
         filteredSessions = appState.sessions.filter(s => s.date === selectedDateStr);
@@ -139,7 +135,6 @@ function renderNotes() {
         detailsSpan.style.display = 'block';
         detailsSpan.textContent = session.topic ? `Goal: ${session.topic}` : "General Study Focus";
         
-        // Display scratchpad bullet notes live inside the log if they exist
         if (session.bullets && session.bullets.length > 0) {
             const bulletContainer = document.createElement('div');
             bulletContainer.style.marginTop = '6px';
@@ -175,16 +170,25 @@ function renderNotes() {
     });
 }
 
-// Stores live typed scratchpad points during active countdown block
 function handleBulletPoints(event) {
     if (event.key === 'Enter') {
         event.preventDefault();
         const scratchpad = document.getElementById('scratchpad');
-        if (!scratchpad) return;
-        let cleanText = scratchpad.value.replace(/^[•\s\-\*]+/g, '').trim();
+        const listContainer = document.getElementById('active-bullet-list');
+        if (!scratchpad || !listContainer) return;
+        
+        let cleanText = scratchpad.value.trim();
         if (cleanText) {
-            appState.notes.push(cleanText); // Temporarily gather notes during running slot
-            scratchpad.value = '• ';
+            appState.notes.push(cleanText); 
+            
+            // Render the note visually on screen as a running bullet item immediately
+            const noteRow = document.createElement('p');
+            noteRow.style.marginBottom = '4px';
+            noteRow.textContent = `• ${cleanText}`;
+            listContainer.appendChild(noteRow);
+            listContainer.scrollTop = listContainer.scrollHeight; 
+            
+            scratchpad.value = ''; // Reset input text area cleanly
         }
     }
 }
@@ -201,19 +205,23 @@ function selectSubject(subjectName) {
             btn.classList.remove('active'); 
         }
     });
+
+    // Clear subtopic goal box when switching between cards
+    const sessionInput = document.getElementById('session-name');
+    if (sessionInput) sessionInput.value = '';
 }
 
 function startFocus() {
     const sessionInput = document.getElementById('session-name');
     const topicTitle = document.getElementById('current-topic');
     const subjectTag = document.getElementById('current-subject');
-    const scratchpad = document.getElementById('scratchpad');
+    const listContainer = document.getElementById('active-bullet-list');
     
     if (topicTitle) topicTitle.textContent = sessionInput.value.trim() || "Deep Revision";
     if (subjectTag) subjectTag.textContent = currentSubject;
-    if (scratchpad) scratchpad.value = '• ';
+    if (listContainer) listContainer.innerHTML = ''; // Reset visible live tracker container
     
-    appState.notes = []; // Clear array for new active notes context
+    appState.notes = []; 
     
     document.getElementById('home-screen').classList.replace('active', 'hidden');
     document.getElementById('timer-screen').classList.replace('hidden', 'active');
@@ -255,13 +263,12 @@ function quitSession() {
     const sessionInput = document.getElementById('session-name');
     const scratchpad = document.getElementById('scratchpad');
     
-    // Grab last unfinished bullet note from panel if user forgot to hit Enter
     if (scratchpad) {
-        let finalNoteText = scratchpad.value.replace(/^[•\s\-\*]+/g, '').trim();
+        let finalNoteText = scratchpad.value.trim();
         if (finalNoteText) appState.notes.push(finalNoteText);
+        scratchpad.value = '';
     }
     
-    // Tie everything (session data + custom live notes) into structural log array
     appState.sessions.push({ 
         date: getTodayString(), 
         duration: finalMinutes || 1, 
@@ -276,6 +283,9 @@ function quitSession() {
     document.getElementById('timer-screen').classList.replace('active', 'hidden');
     document.getElementById('home-screen').classList.replace('hidden', 'active');
     
+    // Clear subtopic box completely when going back home
+    if (sessionInput) sessionInput.value = '';
+    
     updateDashboardUI();
     renderDynamicCalendar();
     renderNotes();
@@ -284,7 +294,7 @@ function quitSession() {
 function openModal(modalId) {
     const targetModal = document.getElementById(modalId);
     if (targetModal) targetModal.classList.remove('hidden');
-    selectedDateStr = ""; // Reset filtering when reopening log
+    selectedDateStr = ""; 
     renderDynamicCalendar();
     renderNotes();
 }

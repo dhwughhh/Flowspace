@@ -310,7 +310,6 @@ body::after { bottom: -10%; right: -10%; animation-delay: -8s; }
 .premium-calendar-grid .day { background: rgba(255, 255, 255, 0.5); text-align: center; padding: 8px 0; border-radius: 8px; font-size: 0.72rem; color: var(--text-main); }
 .premium-calendar-grid .day.cell-active { background: #fecdd3; font-weight: 700; border: 1px solid #f43f5e; }
 
-/* Dynamic charts alignment fixes */
 .insights-container { display: flex; flex-direction: column; gap: 12px; }
 .metric-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); }
 .metric-val { color: var(--text-main); font-weight: 700; }
@@ -351,4 +350,9 @@ body::after { bottom: -10%; right: -10%; animation-delay: -8s; }
   #time-display { font-size: 3rem; }
 }
 
-@keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+/* Subheading typography linking integration */
+.flowstate-subheading {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  color: var(--text-muted);
+}

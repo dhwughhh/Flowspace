@@ -1,9 +1,8 @@
 let appState = { sessions: [], notes: [] };
 let currentSubject = "Physics";
 let timerInterval = null;
-let startTime = 0;          // Tracks real timestamp when timer started
-let pausedTimeAcc = 0;      // Tracks accumulated active focus time in seconds
-let pauseStartTime = 0;     // Tracks when pause was clicked
+let startTime = 0;          
+let pausedTimeAcc = 0;      
 let isTimerPaused = false;
 let selectedDateStr = "";
 
@@ -231,6 +230,9 @@ function startFocus() {
     document.getElementById('home-screen').classList.replace('active', 'hidden');
     document.getElementById('timer-screen').classList.replace('hidden', 'active');
     
+    // Add page state so phone back-button/swipe works naturally
+    history.pushState({ screen: 'timer' }, '');
+
     startTime = Date.now();
     pausedTimeAcc = 0;
     isTimerPaused = false;
@@ -241,7 +243,7 @@ function startFocus() {
         if (!isTimerPaused) {
             updateTimerDisplay();
         }
-    }, 500); // Check twice every second for crisp synchronization
+    }, 500); 
 }
 
 function updateTimerDisplay() {
@@ -262,12 +264,10 @@ function updateTimerDisplay() {
 function toggleTimer() {
     const pauseBtn = document.getElementById('pause-btn');
     if (!isTimerPaused) {
-        // Pausing
         pausedTimeAcc += Math.floor((Date.now() - startTime) / 1000);
         isTimerPaused = true;
         if (pauseBtn) pauseBtn.textContent = "Resume";
     } else {
-        // Resuming
         startTime = Date.now();
         isTimerPaused = false;
         if (pauseBtn) pauseBtn.textContent = "Pause";
@@ -306,6 +306,14 @@ function quitSession() {
     renderDynamicCalendar();
     renderNotes();
 }
+
+// Handle Browser Back Button / Gesture Swipes
+window.addEventListener('popstate', (e) => {
+    const timerScreen = document.getElementById('timer-screen');
+    if (timerScreen && timerScreen.classList.contains('active')) {
+        quitSession();
+    }
+});
 
 function openModal(modalId) {
     const targetModal = document.getElementById(modalId);

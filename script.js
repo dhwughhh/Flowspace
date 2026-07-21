@@ -1,7 +1,9 @@
 let appState = { sessions: [], notes: [] };
 let currentSubject = "Physics";
 let timerInterval = null;
-let totalSecondsElapsed = 0;
+let startTime = 0;          // Tracks real timestamp when timer started
+let pausedTimeAcc = 0;      // Tracks accumulated active focus time in seconds
+let pauseStartTime = 0;     // Tracks when pause was clicked
 let isTimerPaused = false;
 let selectedDateStr = "";
 
@@ -181,14 +183,13 @@ function handleBulletPoints(event) {
         if (cleanText) {
             appState.notes.push(cleanText); 
             
-            // Render the note visually on screen as a running bullet item immediately
             const noteRow = document.createElement('p');
             noteRow.style.marginBottom = '4px';
             noteRow.textContent = `• ${cleanText}`;
             listContainer.appendChild(noteRow);
             listContainer.scrollTop = listContainer.scrollHeight; 
             
-            scratchpad.value = ''; // Reset input text area cleanly
+            scratchpad.value = ''; 
         }
     }
 }
@@ -206,9 +207,13 @@ function selectSubject(subjectName) {
         }
     });
 
-    // Clear subtopic goal box when switching between cards
     const sessionInput = document.getElementById('session-name');
     if (sessionInput) sessionInput.value = '';
+}
+
+function getElapsedSeconds() {
+    if (isTimerPaused) return pausedTimeAcc;
+    return pausedTimeAcc + Math.floor((Date.now() - startTime) / 1000);
 }
 
 function startFocus() {
@@ -219,47 +224,59 @@ function startFocus() {
     
     if (topicTitle) topicTitle.textContent = sessionInput.value.trim() || "Deep Revision";
     if (subjectTag) subjectTag.textContent = currentSubject;
-    if (listContainer) listContainer.innerHTML = ''; // Reset visible live tracker container
+    if (listContainer) listContainer.innerHTML = ''; 
     
     appState.notes = []; 
     
     document.getElementById('home-screen').classList.replace('active', 'hidden');
     document.getElementById('timer-screen').classList.replace('hidden', 'active');
     
-    totalSecondsElapsed = 0;
+    startTime = Date.now();
+    pausedTimeAcc = 0;
     isTimerPaused = false;
     updateTimerDisplay();
     
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
         if (!isTimerPaused) {
-            totalSecondsElapsed++;
             updateTimerDisplay();
-            const hrHand = document.getElementById('hour-hand');
-            const minHand = document.getElementById('minute-hand');
-            const secHand = document.getElementById('second-hand');
-            if (secHand) secHand.style.transform = `translateX(-50%) rotate(${(totalSecondsElapsed * 6) % 360}deg)`;
-            if (minHand) minHand.style.transform = `translateX(-50%) rotate(${((totalSecondsElapsed / 60) * 6) % 360}deg)`;
-            if (hrHand) hrHand.style.transform = `translateX(-50%) rotate(${((totalSecondsElapsed / 3600) * 30) % 360}deg)`;
         }
-    }, 1000);
+    }, 500); // Check twice every second for crisp synchronization
 }
 
 function updateTimerDisplay() {
+    const elapsed = getElapsedSeconds();
     const display = document.getElementById('time-display');
-    if (!display) return;
-    display.textContent = `${String(Math.floor(totalSecondsElapsed / 60)).padStart(2, '0')}:${String(totalSecondsElapsed % 60).padStart(2, '0')}`;
+    if (display) {
+        display.textContent = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`;
+    }
+
+    const hrHand = document.getElementById('hour-hand');
+    const minHand = document.getElementById('minute-hand');
+    const secHand = document.getElementById('second-hand');
+    if (secHand) secHand.style.transform = `translateX(-50%) rotate(${(elapsed * 6) % 360}deg)`;
+    if (minHand) minHand.style.transform = `translateX(-50%) rotate(${((elapsed / 60) * 6) % 360}deg)`;
+    if (hrHand) hrHand.style.transform = `translateX(-50%) rotate(${((elapsed / 3600) * 30) % 360}deg)`;
 }
 
 function toggleTimer() {
-    isTimerPaused = !isTimerPaused;
     const pauseBtn = document.getElementById('pause-btn');
-    if (pauseBtn) pauseBtn.textContent = isTimerPaused ? "Resume" : "Pause";
+    if (!isTimerPaused) {
+        // Pausing
+        pausedTimeAcc += Math.floor((Date.now() - startTime) / 1000);
+        isTimerPaused = true;
+        if (pauseBtn) pauseBtn.textContent = "Resume";
+    } else {
+        // Resuming
+        startTime = Date.now();
+        isTimerPaused = false;
+        if (pauseBtn) pauseBtn.textContent = "Pause";
+    }
 }
 
 function quitSession() {
     if (timerInterval) clearInterval(timerInterval);
-    const finalMinutes = Math.floor(totalSecondsElapsed / 60);
+    const finalMinutes = Math.floor(getElapsedSeconds() / 60);
     const sessionInput = document.getElementById('session-name');
     const scratchpad = document.getElementById('scratchpad');
     
@@ -283,7 +300,6 @@ function quitSession() {
     document.getElementById('timer-screen').classList.replace('active', 'hidden');
     document.getElementById('home-screen').classList.replace('hidden', 'active');
     
-    // Clear subtopic box completely when going back home
     if (sessionInput) sessionInput.value = '';
     
     updateDashboardUI();

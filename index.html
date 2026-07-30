@@ -1,102 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FLOWSPACE</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FlowSpace</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div id="home-screen" class="screen active">
-        <header class="header">
-            <h1 class="logo">FLOWSPACE</h1>
-            <p class="subtitle">Personal Focus & Study Log</p>
-        </header>
+  <div id="bg-pattern-layer" class="bg-layer-floral"></div>
 
-        <main class="dashboard-container">
-            <section class="card stats-card">
-                <h2>Overview</h2>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <span class="stat-value" id="streak-days">0</span>
-                        <span class="stat-label">Day Streak</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value" id="yesterday-hours">0</span>
-                        <span class="stat-label">Mins Today</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value" id="stat-sessions-count">0</span>
-                        <span class="stat-label">Total Sessions</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value" id="stat-total-minutes">0 mins</span>
-                        <span class="stat-label">Time Logged</span>
-                    </div>
-                </div>
-            </section>
-
-            <section class="card focus-setup-card">
-                <h2>Start a Session</h2>
-                <div class="subject-picker">
-                    <button class="subject-pill active" onclick="selectSubject('Physics')">Physics</button>
-                    <button class="subject-pill" onclick="selectSubject('Chemistry')">Chemistry</button>
-                    <button class="subject-pill" onclick="selectSubject('Maths')">Maths</button>
-                    <button class="subject-pill" onclick="selectSubject('Skill Building')">Skills</button>
-                </div>
-                <input type="text" id="session-name" placeholder="What are you focusing on? (e.g. Calculus Practice)" autocomplete="off">
-                <button class="btn primary-btn" onclick="startFocus()">Activate Flow</button>
-            </section>
-
-            <section class="card history-card">
-                <h2>Activity & Log</h2>
-                <p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 12px;">View your past notes, bullet points, and study history.</p>
-                <button class="btn secondary-btn" onclick="openModal('history-modal')">Open History & Calendar</button>
-            </section>
-        </main>
+  <div class="top-bar-container">
+    <div class="streak-tracker" onclick="openModal('analytics-modal')">
+      <span class="streak-bow">🎀</span>
+      <span class="streak-count" id="streak-days">0</span> day streak
     </div>
+    
+    <div class="luxury-nav">
+      <button class="menu-trigger" onclick="openModal('calendar-modal')">Log</button>
+      <button class="menu-trigger" onclick="openModal('analytics-modal')">Insights</button>
+    </div>
+  </div>
 
-    <div id="timer-screen" class="screen hidden">
-        <div class="timer-container">
-            <span id="current-subject" class="badge">Physics</span>
-            <h2 id="current-topic">Deep Revision</h2>
-
-            <div class="analog-clock">
-                <div id="hour-hand" class="hand hour"></div>
-                <div id="minute-hand" class="hand minute"></div>
-                <div id="second-hand" class="hand second"></div>
-                <div class="center-dot"></div>
-            </div>
-
-            <div id="time-display" class="digital-timer">00:00</div>
-
-            <div class="timer-controls">
-                <button id="pause-btn" class="btn secondary-btn" onclick="toggleTimer()">Pause</button>
-                <button class="btn primary-btn" onclick="quitSession()">End Session</button>
-            </div>
-
-            <div class="scratchpad-box">
-                <h3>Session Notes</h3>
-                <input type="text" id="scratchpad" placeholder="Type a bullet note & press Enter..." onkeypress="handleBulletPoints(event)">
-                <div id="active-bullet-list" class="bullet-list-display"></div>
-            </div>
+  <div id="home-screen" class="screen-wrapper active">
+    <div class="center-content-box">
+      <header class="luxury-header">
+        <p class="subtitle big-quote" id="home-quote">"Quiet the mind. The rest will follow."</p>
+        <h1 id="greeting" class="flowstate-title">FLOWSPACE</h1>
+        <p class="flowstate-subheading" style="font-size: 0.9rem; letter-spacing: 2px; opacity: 0.7; margin-top: -10px; margin-bottom: 15px; text-transform: uppercase; text-align: center;">Enter Flowstate</p>
+        <div class="premium-badge">
+          <span class="pulse-dot"></span> Today: <strong id="yesterday-hours">0</strong> mins inside deep focus
         </div>
-    </div>
+      </header>
 
-    <div id="history-modal" class="modal hidden">
-        <div class="modal-content">
-            <button class="close-btn" onclick="closeModal('history-modal')">&times;</button>
-            <h2>Study Calendar</h2>
-            <div id="calendar-days" class="calendar-grid"></div>
-            
-            <hr style="margin: 16px 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
-            
-            <h3>Logs & Bullet Points</h3>
-            <div id="historical-notes-display" class="history-list"></div>
+      <main class="setup-area" style="width: 100%;">
+        <div class="luxury-card interactive-hover-card">
+          <p class="section-label">Select Focus Track</p>
+          <div class="subject-flex">
+            <button class="subject-pill active" onclick="selectSubject('Physics')">Physics</button>
+            <button class="subject-pill" onclick="selectSubject('Chemistry')">Chemistry</button>
+            <button class="subject-pill" onclick="selectSubject('Mathematics')">Mathematics</button>
+            <button class="subject-pill" onclick="selectSubject('Skill Building')">Skills</button>
+          </div>
+
+          <p class="section-label">TODAY'S GOAL:-</p>
+          <input type="text" id="session-name" placeholder="subtopics" class="luxury-input">
+
+          <button class="glass-depth-btn activate-theme" onclick="startFocus()">
+            Activate Flow
+          </button>
         </div>
+      </main>
+      
+      <footer class="author-credits" style="position: relative; margin-top: 30px; bottom: 0; pointer-events: auto; opacity: 0.7;">
+        -dhwani <span class="heart-icon">♡</span>
+      </footer>
+    </div>
+  </div>
+
+  <div id="timer-screen" class="screen-wrapper side-by-side-layout hidden">
+    <div class="timer-column-hub">
+      <header class="luxury-header">
+        <p class="subtitle big-quote" id="timer-quote">"Deep flow activated. Remain present."</p>
+        <h1 id="current-topic" class="serif-title">Deep Revision</h1>
+        <p id="current-subject" class="premium-tag">Physics</p>
+      </header>
+
+      <main class="timer-area" style="width: 100%; display: flex; justify-content: center;">
+        <div class="luxury-card text-center spec-timer-card interactive-hover-card">
+          <div class="luxury-watch">
+            <div class="watch-face">
+              <div class="notch n12"></div>
+              <div class="notch n3"></div>
+              <div class="notch n6"></div>
+              <div class="notch n9"></div>
+            </div>
+            <div class="luxury-hand hr-hand" id="hour-hand"></div>
+            <div class="luxury-hand min-hand" id="minute-hand"></div>
+            <div class="luxury-hand sec-hand" id="second-hand"></div>
+            <div class="luxury-pin"></div>
+          </div>
+
+          <div id="time-display" style="text-align: center;">00:00</div>
+
+          <div class="luxury-controls-row">
+            <button class="glass-depth-btn pause-theme" onclick="toggleTimer()" id="pause-btn">Pause</button>
+            <button class="glass-depth-btn exit-theme" onclick="quitSession()">Exit Space</button>
+          </div>
+        </div>
+      </main>
     </div>
 
-    <script src="script.js"></script>
+    <div class="side-notepad-panel" id="sliding-notepad">
+      <div class="luxury-card notepad-card interactive-hover-card">
+        <p class="section-label-notepad">✨ Quick Bullet Notes</p>
+        <textarea id="scratchpad" placeholder="Type a note and press Enter..." onkeydown="handleBulletPoints(event)"></textarea>
+        <div id="active-bullet-list" style="margin-top: 15px; max-height: 120px; overflow-y: auto; text-align: left; font-size: 0.85rem; line-height: 1.5; opacity: 0.9;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="calendar-modal" class="modal hidden" onclick="closeModal('calendar-modal')">
+    <div class="modal-panel luxury-card" onclick="event.stopPropagation()">
+      <h3>Flow Calendar & Notes</h3>
+      <div class="premium-calendar-grid" id="calendar-days"></div>
+      
+      <p class="section-label-notepad" style="margin-top:15px;">📜 Logged Session Notes</p>
+      <div id="historical-notes-display" class="notes-summary-box">
+        <p style="font-size:0.85rem; opacity:0.6; font-style:italic;">No logged history yet.</p>
+      </div>
+
+      <button class="glass-depth-btn exit-theme" style="width: 100%; margin-top:15px;" onclick="closeModal('calendar-modal')">Return</button>
+    </div>
+  </div>
+
+  <div id="analytics-modal" class="modal hidden" onclick="closeModal('analytics-modal')">
+    <div class="modal-panel luxury-card" onclick="event.stopPropagation()">
+      <h3>Flow Insights</h3>
+      <div class="insights-container">
+        <div class="metric-row">
+          <span>Flow Sessions</span>
+          <span id="stat-sessions-count" class="metric-val">0</span>
+        </div>
+        <div class="metric-row">
+          <span>Total Focus Time</span>
+          <span id="stat-total-minutes" class="metric-val">0 mins</span>
+        </div>
+        <div class="luxury-chart" id="analytics-chart"></div>
+      </div>
+      <button class="glass-depth-btn exit-theme" style="width: 100%;" onclick="closeModal('analytics-modal')">Return</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>

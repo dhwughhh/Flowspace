@@ -21,32 +21,61 @@ function saveData() {
     try { localStorage.setItem('flowspace_data', JSON.stringify(appState)); } catch (e) { console.error(e); }
 }
 
-function getTodayString() {
-    const today = new Date();
-    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+// Local YYYY-MM-DD Date Formatter (Prevents Timezone/UTC Bugs)
+function formatDateLocal(dateObj) {
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
+function getTodayString() {
+    return formatDateLocal(new Date());
+}
+
+// Updated Streak Function (3-Day Buffer Window)
 function calculateCurrentStreak() {
     const uniqueDates = [...new Set(appState.sessions.map(s => s.date))].sort();
     if (uniqueDates.length === 0) return 0;
     
     const todayStr = getTodayString();
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
     
-    if (!uniqueDates.includes(todayStr) && !uniqueDates.includes(yesterdayStr)) return 0;
+    // Day 1 back (Yesterday)
+    const yestObj = new Date();
+    yestObj.setDate(yestObj.getDate() - 1);
+    const yesterdayStr = formatDateLocal(yestObj);
+    
+    // Day 2 back (Day before yesterday)
+    const dbyObj = new Date();
+    dbyObj.setDate(dbyObj.getDate() - 2);
+    const dbyStr = formatDateLocal(dbyObj);
+    
+    // If no sessions logged in any of the last 3 days, streak resets to 0
+    if (!uniqueDates.includes(todayStr) && 
+        !uniqueDates.includes(yesterdayStr) && 
+        !uniqueDates.includes(dbyStr)) {
+        return 0;
+    }
     
     let streak = 0;
-    let checkDate = uniqueDates.includes(todayStr) ? new Date(todayStr) : new Date(yesterdayStr);
     
-    while (true) {
-        const checkDateStr = checkDate.toISOString().split('T')[0];
-        if (uniqueDates.includes(checkDateStr)) {
-            streak++;
-            checkDate.setDate(checkDate.getDate() - 1);
-        } else { break; }
+    // Determine starting anchor for counting backwards
+    let checkObj = new Date();
+    if (!uniqueDates.includes(todayStr)) {
+        checkObj = uniqueDates.includes(yesterdayStr) ? yestObj : dbyObj;
     }
+    
+    // Count consecutive active days backwards
+    while (true) {
+        const checkStr = formatDateLocal(checkObj);
+        if (uniqueDates.includes(checkStr)) {
+            streak++;
+            checkObj.setDate(checkObj.getDate() - 1);
+        } else {
+            break;
+        }
+    }
+    
     return streak;
 }
 
@@ -230,7 +259,7 @@ function startFocus() {
     document.getElementById('home-screen').classList.replace('active', 'hidden');
     document.getElementById('timer-screen').classList.replace('hidden', 'active');
     
-    // Add page state so phone back-button/swipe works naturally
+    // Add page state for phone back-button/swipe navigation
     history.pushState({ screen: 'timer' }, '');
 
     startTime = Date.now();
@@ -307,7 +336,7 @@ function quitSession() {
     renderNotes();
 }
 
-// Handle Browser Back Button / Gesture Swipes
+// Handle Browser Back Button / Mobile Swipe Gestures safely
 window.addEventListener('popstate', (e) => {
     const timerScreen = document.getElementById('timer-screen');
     if (timerScreen && timerScreen.classList.contains('active')) {

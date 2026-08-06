@@ -21,7 +21,6 @@ function saveData() {
     try { localStorage.setItem('flowspace_data', JSON.stringify(appState)); } catch (e) { console.error(e); }
 }
 
-// Local YYYY-MM-DD Date Formatter (Prevents Timezone/UTC Bugs)
 function formatDateLocal(dateObj) {
     const year = dateObj.getFullYear();
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -33,24 +32,20 @@ function getTodayString() {
     return formatDateLocal(new Date());
 }
 
-// Updated Streak Function (3-Day Buffer Window)
 function calculateCurrentStreak() {
     const uniqueDates = [...new Set(appState.sessions.map(s => s.date))].sort();
     if (uniqueDates.length === 0) return 0;
     
     const todayStr = getTodayString();
     
-    // Day 1 back (Yesterday)
     const yestObj = new Date();
     yestObj.setDate(yestObj.getDate() - 1);
     const yesterdayStr = formatDateLocal(yestObj);
     
-    // Day 2 back (Day before yesterday)
     const dbyObj = new Date();
     dbyObj.setDate(dbyObj.getDate() - 2);
     const dbyStr = formatDateLocal(dbyObj);
     
-    // If no sessions logged in any of the last 3 days, streak resets to 0
     if (!uniqueDates.includes(todayStr) && 
         !uniqueDates.includes(yesterdayStr) && 
         !uniqueDates.includes(dbyStr)) {
@@ -58,14 +53,11 @@ function calculateCurrentStreak() {
     }
     
     let streak = 0;
-    
-    // Determine starting anchor for counting backwards
     let checkObj = new Date();
     if (!uniqueDates.includes(todayStr)) {
         checkObj = uniqueDates.includes(yesterdayStr) ? yestObj : dbyObj;
     }
     
-    // Count consecutive active days backwards
     while (true) {
         const checkStr = formatDateLocal(checkObj);
         if (uniqueDates.includes(checkStr)) {
@@ -83,16 +75,20 @@ function updateDashboardUI() {
     const todayStr = getTodayString();
     const todayMins = appState.sessions.filter(s => s.date === todayStr).reduce((t, s) => t + s.duration, 0);
     const totalMins = appState.sessions.reduce((t, s) => t + s.duration, 0);
+    const totalSessions = appState.sessions.length;
+    const avgMins = totalSessions > 0 ? Math.round(totalMins / totalSessions) : 0;
     
     const streakDaysElem = document.getElementById('streak-days');
     const yesterdayHoursElem = document.getElementById('yesterday-hours'); 
     const statSessionsElem = document.getElementById('stat-sessions-count');
     const statTotalMinsElem = document.getElementById('stat-total-minutes');
+    const statAvgSessionElem = document.getElementById('stat-avg-session');
     
     if (streakDaysElem) streakDaysElem.textContent = calculateCurrentStreak();
     if (yesterdayHoursElem) yesterdayHoursElem.textContent = todayMins;
-    if (statSessionsElem) statSessionsElem.textContent = appState.sessions.length;
+    if (statSessionsElem) statSessionsElem.textContent = totalSessions;
     if (statTotalMinsElem) statTotalMinsElem.textContent = `${totalMins} mins`;
+    if (statAvgSessionElem) statAvgSessionElem.textContent = `${avgMins} mins`;
 }
 
 function renderDynamicCalendar() {
@@ -117,6 +113,7 @@ function renderDynamicCalendar() {
         
         if (selectedDateStr === targetDateStr) {
             dayElement.style.outline = "2px solid #4c0519";
+            dayElement.style.borderRadius = "8px";
         }
         
         dayElement.onclick = () => {
@@ -143,7 +140,10 @@ function renderNotes() {
     }
     
     if (filteredSessions.length === 0) {
-        notesContainer.innerHTML = `<p style="font-size:0.85rem; opacity:0.6; font-style:italic;">${selectedDateStr ? "No sessions logged on this date." : "No logged history yet."}</p>`;
+        const emptyMsg = selectedDateStr 
+            ? `No sessions logged for ${selectedDateStr}.` 
+            : "No logged history yet.";
+        notesContainer.innerHTML = `<p style="font-size:0.85rem; opacity:0.6; font-style:italic;">${emptyMsg}</p>`;
         return;
     }
     
@@ -163,18 +163,18 @@ function renderNotes() {
         const detailsSpan = document.createElement('span');
         detailsSpan.style.fontSize = '0.85rem';
         detailsSpan.style.display = 'block';
-        detailsSpan.textContent = session.topic ? `Goal: ${session.topic}` : "General Study Focus";
+        detailsSpan.textContent = session.topic ? `Goal: ${session.topic}` : "General Focus Session";
         
         if (session.bullets && session.bullets.length > 0) {
             const bulletContainer = document.createElement('div');
             bulletContainer.style.marginTop = '6px';
             bulletContainer.style.paddingLeft = '10px';
-            bulletContainer.style.borderLeft = '1px solid rgba(76, 5, 25, 0.15)';
+            bulletContainer.style.borderLeft = '2px solid rgba(76, 5, 25, 0.15)';
             
             session.bullets.forEach(b => {
                 const bText = document.createElement('p');
                 bText.style.fontSize = '0.8rem';
-                bText.style.opacity = '0.8';
+                bText.style.opacity = '0.85';
                 bText.textContent = `• ${b}`;
                 bulletContainer.appendChild(bText);
             });
@@ -183,10 +183,10 @@ function renderNotes() {
         
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = '×';
-        deleteBtn.style = 'position:absolute; right:5px; top:5px; background:none; border:none; color:#ff8fa3; cursor:pointer; font-size:1.1rem;';
+        deleteBtn.style = 'position:absolute; right:5px; top:2px; background:none; border:none; color:#f43f5e; cursor:pointer; font-size:1.2rem; font-weight:700;';
         deleteBtn.onclick = (e) => { 
             e.stopPropagation();
-            if(actualIndex !== -1) appState.sessions.splice(actualIndex, 1); 
+            if (actualIndex !== -1) appState.sessions.splice(actualIndex, 1); 
             saveData(); 
             updateDashboardUI();
             renderDynamicCalendar();
@@ -259,7 +259,6 @@ function startFocus() {
     document.getElementById('home-screen').classList.replace('active', 'hidden');
     document.getElementById('timer-screen').classList.replace('hidden', 'active');
     
-    // Add page state for phone back-button/swipe navigation
     history.pushState({ screen: 'timer' }, '');
 
     startTime = Date.now();
@@ -336,7 +335,6 @@ function quitSession() {
     renderNotes();
 }
 
-// Handle Browser Back Button / Mobile Swipe Gestures safely
 window.addEventListener('popstate', (e) => {
     const timerScreen = document.getElementById('timer-screen');
     if (timerScreen && timerScreen.classList.contains('active')) {

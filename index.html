@@ -3,205 +3,123 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FlowSpace — Luxury Focus & Syllabus Engine</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <title>Focus Flow & JEE Syllabus Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Top Glass Navigation -->
-  <header class="glass-navbar">
-    <div class="nav-brand">FlowSpace</div>
-    <div class="nav-actions">
-      <button class="nav-btn" onclick="toggleTrackerDrawer()">📚 Syllabus Tracker</button>
-      <button class="nav-btn" onclick="openModal('log-modal')">📅 Log</button>
-      <button class="nav-btn" onclick="openModal('insights-modal')">📊 Insights</button>
-    </div>
-  </header>
-
-  <!-- Main Focus Space / Timer Dashboard -->
-  <main class="main-layout">
-    <div class="timer-container luxury-card">
-      <div class="session-badge" id="session-tag">Deep Work Session</div>
-      
-      <!-- Combined Digital Clock Display -->
-      <div class="clock-display">
-        <div class="time-readout" id="timer-display">25:00</div>
-        <div class="streak-indicator">🔥 Streak: <span id="streak-count">0</span> Days</div>
+  <!-- App Container -->
+  <div class="app-container">
+    <header>
+      <div class="brand">
+        <div class="brand-icon">F</div>
+        <h1>Focus Flow</h1>
       </div>
-
-      <div class="luxury-controls-row">
-        <button class="glass-depth-btn activate-theme" id="start-btn" onclick="toggleTimer()">Start Flow</button>
-        <button class="glass-depth-btn exit-theme" onclick="quitSession()">Exit Space</button>
-      </div>
-
-      <button class="glass-depth-btn explain-trigger-btn" onclick="openVoiceModal()">
-        🗣️ Explain Concept
+      <button class="open-drawer-btn" onclick="toggleDrawer(true)">
+        <span>📖 JEE Syllabus Tracker</span>
       </button>
-    </div>
+    </header>
 
-    <!-- Quick Notes Sidebar Panel -->
-    <div class="side-notepad-panel" id="sliding-notepad">
-      <div class="luxury-card notepad-card">
-        <p class="section-label-notepad">📝 Session Bullet Notes</p>
-        <div id="active-bullet-list" class="bullet-list-container"></div>
-        <div class="note-input-row">
-          <input type="text" id="quick-note-input" placeholder="Type a key takeaway..." onkeydown="if(event.key==='Enter') addQuickNote()">
-          <button class="glass-depth-btn add-note-btn" onclick="addQuickNote()">+</button>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <!-- VOICE ORB EXPLAIN MODAL -->
-  <div class="modal-overlay hidden" id="voice-modal-overlay">
-    <div class="luxury-card voice-modal-card">
-      <div class="voice-modal-header">
-        <span class="voice-badge">🎙️ Voice Explanation Engine</span>
-        <div class="voice-window-actions">
-          <button class="icon-btn" onclick="minimizeVoiceModal()" title="Minimize to background">🗕</button>
-          <button class="icon-btn" onclick="closeVoiceModal(false)" title="Stop & Close">✕</button>
-        </div>
-      </div>
-
-      <div class="orb-stage">
-        <div class="glowing-orb" id="voice-orb">
-          <div class="orb-inner-shine"></div>
-        </div>
-      </div>
-
-      <div class="voice-transcript-container" id="voice-transcript-box">
-        <span class="transcript-placeholder">Click the microphone button and explain the concept out loud...</span>
-      </div>
-
-      <div class="voice-modal-controls">
-        <button class="glass-depth-btn mic-toggle-btn" id="mic-btn" onclick="toggleMic()">🎤 Start Recording</button>
-        <div class="voice-action-group hidden" id="voice-actions">
-          <button class="glass-depth-btn exit-theme" onclick="discardVoice()">Discard</button>
-          <button class="glass-depth-btn save-theme" onclick="stageVoiceNote()">Save Note</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MINIMIZED FLOATING ORB PILL -->
-  <div class="floating-voice-pill hidden" id="voice-floating-pill" onclick="restoreVoiceModal()">
-    <span class="pill-orb-dot"></span>
-    <span class="pill-text">Recording Explanation...</span>
-    <button class="pill-expand-btn">⤢</button>
-  </div>
-
-  <!-- END-OF-SESSION VOICE REVIEW MODAL -->
-  <div class="modal-overlay hidden" id="review-modal-overlay">
-    <div class="luxury-card review-modal-card">
-      <h2 style="font-family:'Playfair Display'; color:var(--primary-burgundy); margin-bottom:8px;">Review Voice Explanations</h2>
-      <p class="sub-text" style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Select which spoken explanations to keep in your session log:</p>
-      <div id="voice-review-list" class="review-notes-list" style="max-height:180px; overflow-y:auto; margin-bottom:20px; text-align:left;"></div>
-      <div class="luxury-controls-row" style="max-width:100%;">
-        <button class="glass-depth-btn exit-theme" onclick="finalizeSessionExit(false)">Discard All</button>
-        <button class="glass-depth-btn save-theme" onclick="finalizeSessionExit(true)">Save Selected to Log</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 70% SLIDE-OVER SYLLABUS TRACKER DRAWER -->
-  <div class="drawer-backdrop hidden" id="drawer-backdrop" onclick="closeTrackerDrawer()"></div>
-  <aside class="slide-drawer" id="syllabus-drawer">
-    <div class="drawer-header">
-      <div class="drawer-title-group">
-        <h2>Syllabus Tracker</h2>
-        <p>Weighted JEE Mastery & PYQ System</p>
-      </div>
-      <button class="drawer-close-btn" onclick="closeTrackerDrawer()">✕</button>
-    </div>
-
-    <div class="drawer-content">
-      <!-- Tracker Dashboard View -->
-      <div id="tracker-home">
-        <div class="aesthetic-quote-container">
-          <p class="vintage-quote">What is meant for you,<br>Will find you</p>
-          <span class="quote-subtext">stay intentional</span>
-        </div>
-
-        <div class="subject-cards-grid">
-          <div class="card physics-card" onclick="openSubject('Physics')">
-            <h3>Physics</h3>
-            <p>18 Chapters • 28 Qs Weight</p>
+    <div class="dashboard-grid">
+      <!-- Main Column: Timer & Tasks -->
+      <div class="main-column">
+        <!-- Pomodoro Timer -->
+        <div class="card timer-card">
+          <div class="timer-modes">
+            <button class="mode-btn active" onclick="setTimerMode('focus', event)">Focus (25m)</button>
+            <button class="mode-btn" onclick="setTimerMode('short', event)">Short Break (5m)</button>
+            <button class="mode-btn" onclick="setTimerMode('long', event)">Long Break (15m)</button>
           </div>
-          <div class="card chemistry-card" onclick="openSubject('Chemistry')">
-            <h3>Chemistry</h3>
-            <p>21 Chapters • 30 Qs Weight</p>
-          </div>
-          <div class="card math-card" onclick="openSubject('Mathematics')">
-            <h3>Mathematics</h3>
-            <p>14 Chapters • 30 Qs Weight</p>
+          <div class="timer-display" id="timerDisplay">25:00</div>
+          <div class="timer-controls">
+            <button class="btn-main" id="startBtn" onclick="toggleTimer()">Start Flow</button>
+            <button class="btn-secondary" onclick="resetTimer()">Reset</button>
           </div>
         </div>
 
-        <div class="progress-tracker">
-          <h2 style="font-size:18px; color:var(--primary-burgundy); margin-bottom:12px;">Weighted Syllabus Progress</h2>
+        <!-- Today's Tasks -->
+        <div class="card">
+          <div class="card-title">
+            <span>Today's Focus Tasks</span>
+            <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;" id="taskCount">0 tasks</span>
+          </div>
+          <div class="task-input-box">
+            <input type="text" id="newTaskInput" placeholder="Add a target chapter or problem set..." onkeydown="if(event.key==='Enter') addTask()">
+            <button onclick="addTask()">Add</button>
+          </div>
+          <ul class="task-list" id="taskList"></ul>
+        </div>
+      </div>
+
+      <!-- Right Column: Subject Progress -->
+      <div class="side-column">
+        <div class="card">
+          <div class="card-title">
+            <span>Weighted Progress</span>
+          </div>
           
-          <div class="progress-row physics-progress">
-            <span class="progress-label">Physics</span>
-            <div class="progress-bar-container">
-              <div class="progress-bar-fill"></div>
+          <div class="subject-summary-item physics-progress">
+            <div class="summary-header">
+              <span>Physics</span>
+              <span class="progress-percentage">0%</span>
             </div>
-            <span class="progress-percentage">0%</span>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill fill-physics"></div>
+            </div>
           </div>
 
-          <div class="progress-row chemistry-progress">
-            <span class="progress-label">Chemistry</span>
-            <div class="progress-bar-container">
-              <div class="progress-bar-fill"></div>
+          <div class="subject-summary-item chemistry-progress" style="margin-top: 18px;">
+            <div class="summary-header">
+              <span>Chemistry</span>
+              <span class="progress-percentage">0%</span>
             </div>
-            <span class="progress-percentage">0%</span>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill fill-chemistry"></div>
+            </div>
           </div>
 
-          <div class="progress-row math-progress">
-            <span class="progress-label">Math</span>
-            <div class="progress-bar-container">
-              <div class="progress-bar-fill"></div>
+          <div class="subject-summary-item math-progress" style="margin-top: 18px;">
+            <div class="summary-header">
+              <span>Mathematics</span>
+              <span class="progress-percentage">0%</span>
             </div>
-            <span class="progress-percentage">0%</span>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill fill-math"></div>
+            </div>
           </div>
+
+          <button onclick="toggleDrawer(true)" style="width: 100%; margin-top: 20px; padding: 10px; background: var(--accent-soft); border: none; color: var(--accent-pink); border-radius: 12px; font-family: inherit; font-weight: 700; cursor: pointer; transition: background 0.2s;">
+            Open Detailed Tracker →
+          </button>
         </div>
-
-        <div class="dashboard-footer">— <span class="founder-name">Dhwani <span class="footer-heart">♥</span></span></div>
       </div>
-
-      <!-- Chapter Detail View -->
-      <div id="tracker-page" class="hidden"></div>
-    </div>
-  </aside>
-
-  <!-- LOG MODAL -->
-  <div class="modal-overlay hidden" id="log-modal">
-    <div class="luxury-card modal-card" style="width:90%; max-width:500px;">
-      <div class="modal-header">
-        <h3 style="font-family:'Playfair Display'; color:var(--primary-burgundy);">Calendar & Session History</h3>
-        <button class="icon-btn" onclick="closeModal('log-modal')">✕</button>
-      </div>
-      <div id="session-log-content" class="log-content-box" style="margin-top:16px; max-height:260px; overflow-y:auto; font-size:13px; text-align:left;"></div>
     </div>
   </div>
 
-  <!-- INSIGHTS MODAL -->
-  <div class="modal-overlay hidden" id="insights-modal">
-    <div class="luxury-card modal-card" style="width:90%; max-width:440px;">
-      <div class="modal-header">
-        <h3 style="font-family:'Playfair Display'; color:var(--primary-burgundy);">Productivity Insights</h3>
-        <button class="icon-btn" onclick="closeModal('insights-modal')">✕</button>
-      </div>
-      <div class="insights-stats-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px;">
-        <div class="stat-box" style="background:rgba(255,255,255,0.7); border:1px solid var(--glass-border); padding:20px; border-radius:16px; text-align:center;">
-          <span class="stat-num" id="total-hours" style="display:block; font-size:32px; font-weight:700; color:var(--primary-burgundy);">0.0</span>
-          <span class="stat-label" style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:600;">Total Hours</span>
-        </div>
-        <div class="stat-box" style="background:rgba(255,255,255,0.7); border:1px solid var(--glass-border); padding:20px; border-radius:16px; text-align:center;">
-          <span class="stat-num" id="total-sessions" style="display:block; font-size:32px; font-weight:700; color:var(--primary-burgundy);">0</span>
-          <span class="stat-label" style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:600;">Sessions Completed</span>
-        </div>
-      </div>
+  <!-- Sliding Syllabus Drawer & Overlay -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="toggleDrawer(false)"></div>
+
+  <div class="syllabus-drawer" id="syllabusDrawer">
+    <div class="drawer-header">
+      <h2>JEE Syllabus Tracker</h2>
+      <button class="close-drawer-btn" onclick="toggleDrawer(false)">✕</button>
+    </div>
+
+    <div class="drawer-tabs">
+      <button class="tab-btn active" id="tab-physics" onclick="switchTab('physics')">Physics</button>
+      <button class="tab-btn" id="tab-chemistry" onclick="switchTab('chemistry')">Chemistry</button>
+      <button class="tab-btn" id="tab-math" onclick="switchTab('math')">Math</button>
+    </div>
+
+    <div class="drawer-content" id="drawerContent">
+      <!-- Chapters injected by JavaScript -->
+    </div>
+
+    <div class="drawer-footer">
+      Dhwani ♥ JEE Preparation Workflow
     </div>
   </div>
 

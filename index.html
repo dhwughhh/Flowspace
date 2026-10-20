@@ -2,127 +2,198 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Focus Flow & JEE Syllabus Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FlowSpace</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="enhancements.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- App Container -->
-  <div class="app-container">
-    <header>
-      <div class="brand">
-        <div class="brand-icon">F</div>
-        <h1>Focus Flow</h1>
-      </div>
-      <button class="open-drawer-btn" onclick="toggleDrawer(true)">
-        <span>📖 JEE Syllabus Tracker</span>
-      </button>
-    </header>
+  <div id="bg-pattern-layer" class="bg-layer-floral"></div>
 
-    <div class="dashboard-grid">
-      <!-- Main Column: Timer & Tasks -->
-      <div class="main-column">
-        <!-- Pomodoro Timer -->
-        <div class="card timer-card">
-          <div class="timer-modes">
-            <button class="mode-btn active" onclick="setTimerMode('focus', event)">Focus (25m)</button>
-            <button class="mode-btn" onclick="setTimerMode('short', event)">Short Break (5m)</button>
-            <button class="mode-btn" onclick="setTimerMode('long', event)">Long Break (15m)</button>
-          </div>
-          <div class="timer-display" id="timerDisplay">25:00</div>
-          <div class="timer-controls">
-            <button class="btn-main" id="startBtn" onclick="toggleTimer()">Start Flow</button>
-            <button class="btn-secondary" onclick="resetTimer()">Reset</button>
-          </div>
+  <div class="top-bar-container">
+    <div class="streak-tracker" onclick="openModal('analytics-modal')">
+      <span class="streak-bow">🎀</span>
+      <span class="streak-count" id="streak-days">0</span> day streak
+    </div>
+
+    <div class="luxury-nav">
+      <button class="menu-trigger" onclick="openModal('calendar-modal')">Log</button>
+      <button class="menu-trigger" onclick="openModal('analytics-modal')">Insights</button>
+      <button class="menu-trigger tracker-menu-trigger" onclick="toggleTrackerDrawer(true)" aria-controls="tracker-drawer" aria-expanded="false">Syllabus Tracker</button>
+    </div>
+  </div>
+
+  <div id="home-screen" class="screen-wrapper active">
+    <div class="center-content-box">
+      <header class="luxury-header">
+        <p class="subtitle big-quote" id="home-quote">"Quiet the mind. The rest will follow."</p>
+        <h1 id="greeting" class="flowstate-title">FLOWSPACE</h1>
+        <p class="flowstate-subheading" style="font-size: 0.9rem; letter-spacing: 2px; opacity: 0.7; margin-top: -10px; margin-bottom: 15px; text-transform: uppercase; text-align: center;">Enter Flowstate</p>
+        <div class="premium-badge">
+          <span class="pulse-dot"></span> Today: <strong id="yesterday-hours">0</strong> mins inside deep focus
         </div>
+      </header>
 
-        <!-- Today's Tasks -->
-        <div class="card">
-          <div class="card-title">
-            <span>Today's Focus Tasks</span>
-            <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;" id="taskCount">0 tasks</span>
-          </div>
-          <div class="task-input-box">
-            <input type="text" id="newTaskInput" placeholder="Add a target chapter or problem set..." onkeydown="if(event.key==='Enter') addTask()">
-            <button onclick="addTask()">Add</button>
-          </div>
-          <ul class="task-list" id="taskList"></ul>
-        </div>
-      </div>
-
-      <!-- Right Column: Subject Progress -->
-      <div class="side-column">
-        <div class="card">
-          <div class="card-title">
-            <span>Weighted Progress</span>
-          </div>
-          
-          <div class="subject-summary-item physics-progress">
-            <div class="summary-header">
-              <span>Physics</span>
-              <span class="progress-percentage">0%</span>
-            </div>
-            <div class="progress-bar-bg">
-              <div class="progress-bar-fill fill-physics"></div>
-            </div>
+      <main class="setup-area" style="width: 100%;">
+        <div class="luxury-card interactive-hover-card">
+          <p class="section-label">Select Focus Track</p>
+          <div class="subject-flex">
+            <button class="subject-pill active" onclick="selectSubject('Physics')">Physics</button>
+            <button class="subject-pill" onclick="selectSubject('Chemistry')">Chemistry</button>
+            <button class="subject-pill" onclick="selectSubject('Mathematics')">Mathematics</button>
+            <button class="subject-pill" onclick="selectSubject('Skill Building')">Skills</button>
           </div>
 
-          <div class="subject-summary-item chemistry-progress" style="margin-top: 18px;">
-            <div class="summary-header">
-              <span>Chemistry</span>
-              <span class="progress-percentage">0%</span>
-            </div>
-            <div class="progress-bar-bg">
-              <div class="progress-bar-fill fill-chemistry"></div>
-            </div>
-          </div>
+          <p class="section-label">TODAY'S GOAL:-</p>
+          <input type="text" id="session-name" placeholder="subtopics" class="luxury-input">
 
-          <div class="subject-summary-item math-progress" style="margin-top: 18px;">
-            <div class="summary-header">
-              <span>Mathematics</span>
-              <span class="progress-percentage">0%</span>
-            </div>
-            <div class="progress-bar-bg">
-              <div class="progress-bar-fill fill-math"></div>
-            </div>
-          </div>
-
-          <button onclick="toggleDrawer(true)" style="width: 100%; margin-top: 20px; padding: 10px; background: var(--accent-soft); border: none; color: var(--accent-pink); border-radius: 12px; font-family: inherit; font-weight: 700; cursor: pointer; transition: background 0.2s;">
-            Open Detailed Tracker →
+          <button class="glass-depth-btn activate-theme" onclick="startFocus()">
+            Activate Flow
           </button>
         </div>
+      </main>
+
+      <footer class="author-credits" style="position: relative; margin-top: 30px; bottom: 0; pointer-events: auto; opacity: 0.7;">
+        -dhwani <span class="heart-icon">♡</span>
+      </footer>
+    </div>
+  </div>
+
+  <div id="timer-screen" class="screen-wrapper side-by-side-layout hidden">
+    <div class="timer-column-hub">
+      <header class="luxury-header">
+        <p class="subtitle big-quote" id="timer-quote">"Deep flow activated. Remain present."</p>
+        <h1 id="current-topic" class="serif-title">Deep Revision</h1>
+        <p id="current-subject" class="premium-tag">Physics</p>
+      </header>
+
+      <main class="timer-area" style="width: 100%; display: flex; justify-content: center;">
+        <div class="luxury-card text-center spec-timer-card interactive-hover-card">
+          <div class="luxury-watch">
+            <div class="watch-face">
+              <div class="notch n12"></div>
+              <div class="notch n3"></div>
+              <div class="notch n6"></div>
+              <div class="notch n9"></div>
+            </div>
+            <div class="luxury-hand hr-hand" id="hour-hand"></div>
+            <div class="luxury-hand min-hand" id="minute-hand"></div>
+            <div class="luxury-hand sec-hand" id="second-hand"></div>
+            <div class="luxury-pin"></div>
+          </div>
+
+          <div id="time-display" style="text-align: center;">00:00</div>
+
+          <div class="luxury-controls-row">
+            <button class="glass-depth-btn pause-theme" onclick="toggleTimer()" id="pause-btn">Pause</button>
+            <button class="glass-depth-btn exit-theme" onclick="quitSession()">Exit Space</button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div class="side-notepad-panel" id="sliding-notepad">
+      <div class="luxury-card notepad-card interactive-hover-card">
+        <p class="section-label-notepad">✨ Quick Bullet Notes</p>
+        <textarea id="scratchpad" placeholder="Type a note and press Enter..." onkeydown="handleBulletPoints(event)"></textarea>
+        <div id="active-bullet-list" style="margin-top: 15px; max-height: 120px; overflow-y: auto; text-align: left; font-size: 0.85rem; line-height: 1.5; opacity: 0.9;"></div>
       </div>
+      <button class="glass-depth-btn activate-theme explain-open-trigger" type="button" onclick="openExplainModal()">🎙 Explain Yourself</button>
     </div>
   </div>
 
-  <!-- Sliding Syllabus Drawer & Overlay -->
-  <div class="drawer-overlay" id="drawerOverlay" onclick="toggleDrawer(false)"></div>
+  <div id="calendar-modal" class="modal hidden" onclick="closeModal('calendar-modal')">
+    <div class="modal-panel luxury-card" onclick="event.stopPropagation()">
+      <h3>Flow Calendar & Notes</h3>
+      <div class="premium-calendar-grid" id="calendar-days"></div>
 
-  <div class="syllabus-drawer" id="syllabusDrawer">
-    <div class="drawer-header">
-      <h2>JEE Syllabus Tracker</h2>
-      <button class="close-drawer-btn" onclick="toggleDrawer(false)">✕</button>
-    </div>
+      <p class="section-label-notepad" style="margin-top:15px;">📜 Logged Session Notes</p>
+      <div id="historical-notes-display" class="notes-summary-box">
+        <p style="font-size:0.85rem; opacity:0.6; font-style:italic;">No logged history yet.</p>
+      </div>
 
-    <div class="drawer-tabs">
-      <button class="tab-btn active" id="tab-physics" onclick="switchTab('physics')">Physics</button>
-      <button class="tab-btn" id="tab-chemistry" onclick="switchTab('chemistry')">Chemistry</button>
-      <button class="tab-btn" id="tab-math" onclick="switchTab('math')">Math</button>
-    </div>
-
-    <div class="drawer-content" id="drawerContent">
-      <!-- Chapters injected by JavaScript -->
-    </div>
-
-    <div class="drawer-footer">
-      Dhwani ♥ JEE Preparation Workflow
+      <button class="glass-depth-btn exit-theme" style="width: 100%; margin-top:15px;" onclick="closeModal('calendar-modal')">Return</button>
     </div>
   </div>
+
+  <div id="analytics-modal" class="modal hidden" onclick="closeModal('analytics-modal')">
+    <div class="modal-panel luxury-card" onclick="event.stopPropagation()">
+      <h3>Flow Insights</h3>
+      <div class="insights-container">
+        <div class="metric-row">
+          <span>Flow Sessions</span>
+          <span id="stat-sessions-count" class="metric-val">0</span>
+        </div>
+        <div class="metric-row">
+          <span>Total Focus Time</span>
+          <span id="stat-total-minutes" class="metric-val">0 mins</span>
+        </div>
+        <div class="metric-row">
+          <span>Avg Session Length</span>
+          <span id="stat-avg-session" class="metric-val">0 mins</span>
+        </div>
+        <div class="luxury-chart" id="analytics-chart"></div>
+      </div>
+      <button class="glass-depth-btn exit-theme" style="width: 100%;" onclick="closeModal('analytics-modal')">Return</button>
+    </div>
+  </div>
+
+  <!-- Syllabus Tracker: isolated in a sliding drawer so its CSS cannot affect FlowSpace. -->
+  <div id="tracker-backdrop" class="feature-backdrop" onclick="toggleTrackerDrawer(false)" aria-hidden="true"></div>
+  <aside id="tracker-drawer" class="tracker-drawer" aria-hidden="true" aria-label="JEE syllabus tracker">
+    <div class="tracker-drawer-header">
+      <div class="tracker-drawer-title-wrap">
+        <strong>JEE Syllabus Tracker</strong>
+        <span>Your chapter progress is saved in this browser.</span>
+      </div>
+      <button class="tracker-close-button" type="button" onclick="toggleTrackerDrawer(false)" aria-label="Close syllabus tracker">×</button>
+    </div>
+    <iframe id="tracker-frame" src="tracker/index.html" title="JEE Main syllabus tracker"></iframe>
+  </aside>
+
+  <!-- Explain Yourself: overlay above the existing timer. -->
+  <div id="explain-modal" class="explain-modal-layer" aria-hidden="true" onclick="handleExplainBackdrop(event)">
+    <section id="explain-panel" class="explain-panel" role="dialog" aria-modal="true" aria-labelledby="explain-title" onclick="event.stopPropagation()">
+      <div class="explain-panel-header">
+        <div>
+          <p class="explain-eyebrow">VOICE-POWERED REVISION</p>
+          <h2 id="explain-title">Explain Yourself</h2>
+        </div>
+        <button class="explain-icon-button" type="button" onclick="minimizeExplain()" aria-label="Minimize Explain Yourself">−</button>
+      </div>
+
+      <div class="explain-orb-wrap" aria-hidden="true">
+        <div id="explain-orb" class="explain-orb"><span></span><i></i></div>
+      </div>
+      <p id="explain-status" class="explain-status" role="status">Explain the topic in your own words. Your draft is saved locally while you work.</p>
+
+      <label class="explain-transcript-label" for="explain-transcript">Your explanation</label>
+      <textarea id="explain-transcript" class="explain-transcript" rows="7" placeholder="Start speaking, or type your explanation here…"></textarea>
+      <p class="explain-privacy-note">Speech-to-text depends on browser support and may be processed by your browser's speech service. You can stop the microphone at any time. Automatic formatting is not an AI-generated summary.</p>
+
+      <div class="explain-live-controls">
+        <button id="explain-start-button" class="glass-depth-btn activate-theme" type="button" onclick="startExplainCapture()">Start voice notes</button>
+        <button id="explain-stop-button" class="glass-depth-btn pause-theme" type="button" onclick="stopExplainCapture()" disabled>Stop taking notes</button>
+        <button class="glass-depth-btn exit-theme" type="button" onclick="minimizeExplain()">Minimize</button>
+      </div>
+
+      <div class="explain-review-controls">
+        <button class="glass-depth-btn activate-theme" type="button" onclick="saveNotesAndEndSession()">Save notes &amp; end session</button>
+        <button class="glass-depth-btn exit-theme" type="button" onclick="discardNotesAndEndSession()">Discard notes &amp; end session</button>
+        <button class="glass-depth-btn pause-theme" type="button" onclick="continueSessionFromReview()">Continue session</button>
+      </div>
+    </section>
+  </div>
+
+  <button id="explain-floating-pill" class="explain-floating-pill" type="button" onclick="restoreExplainModal()" aria-label="Reopen Explain Yourself">
+    <span class="explain-floating-dot"></span><span>Explain Yourself</span>
+  </button>
 
   <script src="script.js"></script>
+  <script src="enhancements.js"></script>
 </body>
 </html>

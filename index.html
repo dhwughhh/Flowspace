@@ -5,10 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>FlowSpace</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="enhancements.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -27,18 +26,19 @@
     </div>
   </div>
 
+  <!-- FLOWSPACE HOME -->
   <div id="home-screen" class="screen-wrapper active">
     <div class="center-content-box">
       <header class="luxury-header">
         <p class="subtitle big-quote" id="home-quote">"Quiet the mind. The rest will follow."</p>
         <h1 id="greeting" class="flowstate-title">FLOWSPACE</h1>
-        <p class="flowstate-subheading" style="font-size: 0.9rem; letter-spacing: 2px; opacity: 0.7; margin-top: -10px; margin-bottom: 15px; text-transform: uppercase; text-align: center;">Enter Flowstate</p>
+        <p class="flowstate-subheading" style="font-size:0.9rem;letter-spacing:2px;opacity:0.7;margin-top:-10px;margin-bottom:15px;text-transform:uppercase;text-align:center;">Enter Flowstate</p>
         <div class="premium-badge">
           <span class="pulse-dot"></span> Today: <strong id="yesterday-hours">0</strong> mins inside deep focus
         </div>
       </header>
 
-      <main class="setup-area" style="width: 100%;">
+      <main class="setup-area" style="width:100%;">
         <div class="luxury-card interactive-hover-card">
           <p class="section-label">Select Focus Track</p>
           <div class="subject-flex">
@@ -51,18 +51,17 @@
           <p class="section-label">TODAY'S GOAL:-</p>
           <input type="text" id="session-name" placeholder="subtopics" class="luxury-input">
 
-          <button class="glass-depth-btn activate-theme" onclick="startFocus()">
-            Activate Flow
-          </button>
+          <button class="glass-depth-btn activate-theme" onclick="startFocus()">Activate Flow</button>
         </div>
       </main>
 
-      <footer class="author-credits" style="position: relative; margin-top: 30px; bottom: 0; pointer-events: auto; opacity: 0.7;">
+      <footer class="author-credits" style="position:relative;margin-top:30px;bottom:0;pointer-events:auto;opacity:0.7;">
         -dhwani <span class="heart-icon">♡</span>
       </footer>
     </div>
   </div>
 
+  <!-- TIMER SCREEN -->
   <div id="timer-screen" class="screen-wrapper side-by-side-layout hidden">
     <div class="timer-column-hub">
       <header class="luxury-header">
@@ -71,7 +70,7 @@
         <p id="current-subject" class="premium-tag">Physics</p>
       </header>
 
-      <main class="timer-area" style="width: 100%; display: flex; justify-content: center;">
+      <main class="timer-area" style="width:100%;display:flex;justify-content:center;">
         <div class="luxury-card text-center spec-timer-card interactive-hover-card">
           <div class="luxury-watch">
             <div class="watch-face">
@@ -86,8 +85,7 @@
             <div class="luxury-pin"></div>
           </div>
 
-          <div id="time-display" style="text-align: center;">00:00</div>
-
+          <div id="time-display" style="text-align:center;">00:00</div>
           <div class="luxury-controls-row">
             <button class="glass-depth-btn pause-theme" onclick="toggleTimer()" id="pause-btn">Pause</button>
             <button class="glass-depth-btn exit-theme" onclick="quitSession()">Exit Space</button>
@@ -100,49 +98,40 @@
       <div class="luxury-card notepad-card interactive-hover-card">
         <p class="section-label-notepad">✨ Quick Bullet Notes</p>
         <textarea id="scratchpad" placeholder="Type a note and press Enter..." onkeydown="handleBulletPoints(event)"></textarea>
-        <div id="active-bullet-list" style="margin-top: 15px; max-height: 120px; overflow-y: auto; text-align: left; font-size: 0.85rem; line-height: 1.5; opacity: 0.9;"></div>
+        <div id="active-bullet-list" style="margin-top:15px;max-height:120px;overflow-y:auto;text-align:left;font-size:0.85rem;line-height:1.5;opacity:0.9;"></div>
       </div>
       <button class="glass-depth-btn activate-theme explain-open-trigger" type="button" onclick="openExplainModal()">🎙 Explain Yourself</button>
     </div>
   </div>
 
+  <!-- SESSION LOG -->
   <div id="calendar-modal" class="modal hidden" onclick="closeModal('calendar-modal')">
     <div class="modal-panel luxury-card" onclick="event.stopPropagation()">
-      <h3>Flow Calendar & Notes</h3>
+      <h3>Flow Calendar &amp; Notes</h3>
       <div class="premium-calendar-grid" id="calendar-days"></div>
-
       <p class="section-label-notepad" style="margin-top:15px;">📜 Logged Session Notes</p>
       <div id="historical-notes-display" class="notes-summary-box">
-        <p style="font-size:0.85rem; opacity:0.6; font-style:italic;">No logged history yet.</p>
+        <p style="font-size:0.85rem;opacity:0.6;font-style:italic;">No logged history yet.</p>
       </div>
-
-      <button class="glass-depth-btn exit-theme" style="width: 100%; margin-top:15px;" onclick="closeModal('calendar-modal')">Return</button>
+      <button class="glass-depth-btn exit-theme" style="width:100%;margin-top:15px;" onclick="closeModal('calendar-modal')">Return</button>
     </div>
   </div>
 
+  <!-- INSIGHTS -->
   <div id="analytics-modal" class="modal hidden" onclick="closeModal('analytics-modal')">
     <div class="modal-panel luxury-card" onclick="event.stopPropagation()">
       <h3>Flow Insights</h3>
       <div class="insights-container">
-        <div class="metric-row">
-          <span>Flow Sessions</span>
-          <span id="stat-sessions-count" class="metric-val">0</span>
-        </div>
-        <div class="metric-row">
-          <span>Total Focus Time</span>
-          <span id="stat-total-minutes" class="metric-val">0 mins</span>
-        </div>
-        <div class="metric-row">
-          <span>Avg Session Length</span>
-          <span id="stat-avg-session" class="metric-val">0 mins</span>
-        </div>
+        <div class="metric-row"><span>Flow Sessions</span><span id="stat-sessions-count" class="metric-val">0</span></div>
+        <div class="metric-row"><span>Total Focus Time</span><span id="stat-total-minutes" class="metric-val">0 mins</span></div>
+        <div class="metric-row"><span>Avg Session Length</span><span id="stat-avg-session" class="metric-val">0 mins</span></div>
         <div class="luxury-chart" id="analytics-chart"></div>
       </div>
-      <button class="glass-depth-btn exit-theme" style="width: 100%;" onclick="closeModal('analytics-modal')">Return</button>
+      <button class="glass-depth-btn exit-theme" style="width:100%;" onclick="closeModal('analytics-modal')">Return</button>
     </div>
   </div>
 
-  <!-- Syllabus Tracker: isolated in a sliding drawer so its CSS cannot affect FlowSpace. -->
+  <!-- SYLLABUS TRACKER DRAWER -->
   <div id="tracker-backdrop" class="feature-backdrop" onclick="toggleTrackerDrawer(false)" aria-hidden="true"></div>
   <aside id="tracker-drawer" class="tracker-drawer" aria-hidden="true" aria-label="JEE syllabus tracker">
     <div class="tracker-drawer-header">
@@ -152,10 +141,44 @@
       </div>
       <button class="tracker-close-button" type="button" onclick="toggleTrackerDrawer(false)" aria-label="Close syllabus tracker">×</button>
     </div>
-    <iframe id="tracker-frame" src="tracker/index.html" title="JEE Main syllabus tracker"></iframe>
+
+    <div id="tracker-content" class="tracker-scope">
+      <div id="home">
+        <div class="top-curve-header">
+          <h1>JEE Prep Tracker</h1>
+          <p>Master Your Syllabus Systematic &amp; Sharp</p>
+        </div>
+
+        <div class="main-content-wrapper">
+          <div class="dashboard-core">
+            <div class="aesthetic-quote-container">
+              <p class="vintage-quote">What is meant for you,<br>Will find you</p>
+              <span class="quote-subtext">stay intentional</span>
+            </div>
+
+            <div class="subject-cards-grid">
+              <div class="card physics-card" onclick="openSubject('Physics')"><h3>Physics</h3><p>16 Chapters</p></div>
+              <div class="card chemistry-card" onclick="openSubject('Chemistry')"><h3>Chemistry</h3><p>21 Chapters</p></div>
+              <div class="card math-card" onclick="openSubject('Mathematics')"><h3>Mathematics</h3><p>15 Chapters</p></div>
+            </div>
+
+            <div class="progress-tracker">
+              <h2>Overall Progress</h2>
+              <div class="progress-row physics-progress"><span class="progress-label">Physics</span><div class="progress-bar-container"><div class="progress-bar-fill"></div></div><span class="progress-percentage">0%</span></div>
+              <div class="progress-row chemistry-progress"><span class="progress-label">Chemistry</span><div class="progress-bar-container"><div class="progress-bar-fill"></div></div><span class="progress-percentage">0%</span></div>
+              <div class="progress-row math-progress"><span class="progress-label">Math</span><div class="progress-bar-container"><div class="progress-bar-fill"></div></div><span class="progress-percentage">0%</span></div>
+            </div>
+          </div>
+
+          <p class="weightage-disclaimer">JEE Main chapter weightages are historical estimates from the supplied trend summary, not guaranteed 2027 marks. Unlabelled chapters mean no estimate was supplied.</p>
+          <div class="dashboard-footer">— <span class="founder-name">Dhwani <span class="footer-heart">♥</span></span></div>
+        </div>
+      </div>
+      <div id="page" style="display:none"></div>
+    </div>
   </aside>
 
-  <!-- Explain Yourself: overlay above the existing timer. -->
+  <!-- EXPLAIN YOURSELF -->
   <div id="explain-modal" class="explain-modal-layer" aria-hidden="true" onclick="handleExplainBackdrop(event)">
     <section id="explain-panel" class="explain-panel" role="dialog" aria-modal="true" aria-labelledby="explain-title" onclick="event.stopPropagation()">
       <div class="explain-panel-header">
@@ -169,8 +192,8 @@
       <div class="explain-orb-wrap" aria-hidden="true">
         <div id="explain-orb" class="explain-orb"><span></span><i></i></div>
       </div>
-      <p id="explain-status" class="explain-status" role="status">Explain the topic in your own words. Your draft is saved locally while you work.</p>
 
+      <p id="explain-status" class="explain-status" role="status">Explain the topic in your own words. Your draft is saved locally while you work.</p>
       <label class="explain-transcript-label" for="explain-transcript">Your explanation</label>
       <textarea id="explain-transcript" class="explain-transcript" rows="7" placeholder="Start speaking, or type your explanation here…"></textarea>
       <p class="explain-privacy-note">Speech-to-text depends on browser support and may be processed by your browser's speech service. You can stop the microphone at any time. Automatic formatting is not an AI-generated summary.</p>
@@ -194,6 +217,5 @@
   </button>
 
   <script src="script.js"></script>
-  <script src="enhancements.js"></script>
 </body>
 </html>
